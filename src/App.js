@@ -1,8 +1,8 @@
-import { StatusBar } from 'expo-status-bar';
-import { Text, View } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
 import { useFonts, Roboto_400Regular, Roboto_500Medium } from '@expo-google-fonts/roboto';
-import Button from './components/Button';
-import TextInput from './components/TextInput';
+import { View, ActivityIndicator } from 'react-native'; 
+import RootNavigator from './navigation/RootNavigator';
+import '../global.css';
 
 export default function App() {
   let [fontsLoaded] = useFonts({
@@ -10,15 +10,17 @@ export default function App() {
     Roboto_500Medium,
   });
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded) {
+    return (
+      <View className='flex-1 items-center justify-center'>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
 
   return (
-    <View className='flex-1 gap-2 items-center justify-center bg-white'>
-      <Text>Test app!!!</Text>
-      <Button title='Test primary' variant='primary' onPress={() => {}} />
-      <Button title='Test secondary' variant='secondary' onPress={() => {}} />
-      <TextInput label='test text input' placeholder='type...' isPassword={true} />
-      <StatusBar style='auto' />
-    </View>
+    <NavigationContainer>
+      <RootNavigator />
+    </NavigationContainer>
   );
 }

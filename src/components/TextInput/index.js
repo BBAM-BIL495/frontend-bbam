@@ -6,9 +6,9 @@ const TextInput = ({ label, placeholder, isPassword, value, onChangeText }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <View className="mb-4">
-      {label && <Text className="text-m3-body-small-emphasized text-bbam-text-main mb-1 ml-1">{label}</Text>}
-      <View className="w-full flex-row items-center border-[1.5px] border-bbam-text-light focus:border-bbam-indigo-main rounded-xl bg-white p-4">
+    <View className="flex gap-2">
+      {label && <Text className="text-m3-body-medium font-bold text-bbam-text-main mb-1 ml-1">{label}</Text>}
+      <View className="w-full flex-row items-center border border-bbam-text-light focus:border-[1.5px] focus:border-bbam-indigo-main rounded-2xl bg-white p-4">
         <NativeInput
           placeholder={placeholder}
           secureTextEntry={isPassword && !showPassword}
