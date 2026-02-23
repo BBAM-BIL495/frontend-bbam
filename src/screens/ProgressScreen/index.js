@@ -2,7 +2,7 @@ import { Text, View } from 'react-native';
 import Button from '../../components/Button';
 import CardItem from '../../components/CardItem';
 
-const ProgressScreen = () => {
+const ProgressScreen = ({ navigation }) => {
   return (
     <View className='flex-1 gap-4 px-6 items-center justify-center bg-bbam-back-page text-m3-label-large font-normal'>
       <Text>Progress Screen</Text>

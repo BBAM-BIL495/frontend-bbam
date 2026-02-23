@@ -10,8 +10,8 @@ const RootNavigator = () => {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Login" component={OnboardingScreen} />
-      <Stack.Screen name="MainTabs" component={TabNavigator} />
+      <Stack.Screen name="Login" component={OnboardingScreen} options={{ gestureEnabled: false }} />
+      <Stack.Screen name="MainTabs" component={TabNavigator} options={{ gestureEnabled: false }} />
     </Stack.Navigator>
   );
 }
