@@ -64,7 +64,7 @@ const HomeScreen = ({ navigation }) => {
           <View className="flex-1 bg-bbam-back-card p-4 rounded-3xl items-center justify-center h-32">
             <Ionicons name="time" size={24} color="#585AD1" />
             <Text className="text-m3-title-small font-bold mt-2">{`${totalTimeSpent} Hours`}</Text>
-            <Text className="text-m3-label-medium text-bbam-text-light">Time Spent</Text>
+            <Text className="text-m3-title-small font-bold text-bbam-text-light">Time Spent</Text>
           </View>
         </View>
 
