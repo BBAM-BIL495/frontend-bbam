@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Body and Beyond AI Mentor",
+    "name": "Body & Beyond AI Mentor",
     "slug": "body-and-beyond-ai-mentor",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,9 +13,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bbam.bodybeyond"
     },
     "android": {
+      "package": "com.bbam.bodybeyond",
+      "permissions": ["android.permission.CAMERA"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -26,8 +29,29 @@
       "bundler": "metro",
       "favicon": "./assets/favicon.png"
     },
+    "extra": {
+      "eas": {
+        "projectId": "63225d90-6e13-4214-af44-7150a523c4ab"
+      }
+    },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Body & Beyond to access your camera for pose detection."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 24,
+            "ndkVersion": "27.0.12077973"
+          }
+        }
+      ],
+      "react-native-vision-camera"
     ]
   }
 }

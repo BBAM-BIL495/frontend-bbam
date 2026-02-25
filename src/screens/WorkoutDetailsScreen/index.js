@@ -30,6 +30,7 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
   const loadWorkoutPlan = (planId) => {};
   const handleStartWorkout = () => {
     console.log('pressed Start Workout');
+    navigation.navigate('LiveSession');
   };
   const handleEditWorkout = () => {};
   const handleSetReminder = (time) => {

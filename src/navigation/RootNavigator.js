@@ -3,6 +3,7 @@ import { createNativeStackNavigator  } from '@react-navigation/native-stack';
 import TabNavigator from './TabNavigator';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import WorkoutDetailsScreen from '../screens/WorkoutDetailsScreen';
+import LiveSessionScreen from '../screens/LiveSessionScreen/index';
 
 const Stack = createNativeStackNavigator();
 
@@ -19,6 +20,11 @@ const RootNavigator = () => {
         options={{
           animation: 'slide_from_right',
         }}
+      />
+      <Stack.Screen
+        name="LiveSession" 
+        component={LiveSessionScreen} 
+        options={{ gestureEnabled: false }}
       />
     </Stack.Navigator>
   );
