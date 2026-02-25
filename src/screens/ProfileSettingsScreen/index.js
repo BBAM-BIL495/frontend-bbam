@@ -1,11 +1,415 @@
-import { Text, View } from 'react-native';
+import { StatusBar } from "expo-status-bar";
+import { useEffect, useMemo, useState } from "react";
+import { View, Text, Switch, TouchableOpacity, ScrollView } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import Button from "../../components/Button";
+import TextInput from "../../components/TextInput";
 
-const ProfileSettingsScreen = () => {
-  return (
-    <View className='flex-1 px-6 items-center justify-center bg-bbam-back-page text-m3-label-large font-normal'>
-      <Text>Profile Settings Screen</Text>
+const ProfileSettingsScreen = ({ navigation }) => {
+  const [userProfile, setUserProfile] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+
+  const [heightInput, setHeightInput] = useState("");
+  const [weightInput, setWeightInput] = useState("");
+  const [ageInput, setAgeInput] = useState("");
+  const [genderInput, setGenderInput] = useState("male");
+
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    loadProfile();
+    setupNotificationListeners();
+  }, []);
+
+  const initials = useMemo(() => {
+    const name = userProfile?.username || "";
+    const parts = name.trim().split(" ").filter(Boolean);
+    if (!parts.length) return "U";
+    const first = parts[0]?.[0] || "U";
+    const last = parts.length > 1 ? parts[parts.length - 1]?.[0] : "";
+    return (first + last).toUpperCase();
+  }, [userProfile]);
+
+  // ===== METHODS (keep LLD shape; stubs are ok) =====
+  const loadProfile = async () => {
+    try {
+      setIsLoading(true);
+
+      const mockProfile = {
+        username: "Melis Sezer",
+        height: 170,
+        weight: 60,
+        age: 23,
+        gender: "female",
+        email: "melis@example.com",
+      };
+
+      setUserProfile(mockProfile);
+      setIsLoading(false);
+    } catch (e) {
+      setIsLoading(false);
+    }
+  };
+
+  const enableEdit = () => {
+    if (!userProfile) return;
+
+    setHeightInput(String(userProfile.height ?? ""));
+    setWeightInput(String(userProfile.weight ?? ""));
+    setAgeInput(String(userProfile.age ?? ""));
+    setGenderInput(userProfile.gender ?? "male");
+
+    setEditMode(true);
+    setHasUnsavedChanges(false);
+  };
+
+  const validateInputs = () => true;
+
+  const handleSaveChanges = async () => {
+    if (!validateInputs()) return;
+
+    setUserProfile((prev) => ({
+      ...prev,
+      height: Number(heightInput),
+      weight: Number(weightInput),
+      age: Number(ageInput),
+      gender: genderInput,
+    }));
+
+    setEditMode(false);
+    setHasUnsavedChanges(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditMode(false);
+    setHasUnsavedChanges(false);
+  };
+
+  const setupNotificationListeners = () => {
+    // TODO later (silent push listener, etc.)
+  };
+
+  const toggleNotifications = (enabled) => {
+    setNotificationsEnabled(enabled);
+    // TODO later (update backend preference)
+  };
+
+  const handleLogout = async () => {
+    try {
+      // TODO later:
+      // - cancel notifications (expo-notifications)
+      // - remove JWT from AsyncStorage
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Login" }],
+      });
+    } catch (e) {}
+  };
+
+  const SectionTitle = ({ children }) => (
+    <Text className="text-m3-label-large font-bold text-bbam-text-main mb-3">
+      {children}
+    </Text>
+  );
+
+  const Card = ({ children, className = "" }) => (
+    <View className={`bg-white rounded-3xl p-5 shadow-sm ${className}`}>
+      {children}
     </View>
   );
-}
- 
+
+  const RowItem = ({ icon, title, subtitle, right, onPress }) => (
+    <TouchableOpacity
+      activeOpacity={onPress ? 0.7 : 1}
+      onPress={onPress}
+      className="flex-row items-center justify-between py-3"
+    >
+      <View className="flex-row items-center flex-1 pr-3">
+        <View className="w-10 h-10 rounded-2xl bg-bbam-back-card items-center justify-center mr-3">
+          <Ionicons name={icon} size={20} color="#585AD1" />
+        </View>
+        <View className="flex-1">
+          <Text className="text-m3-body-large font-bold text-bbam-text-main">
+            {title}
+          </Text>
+          {!!subtitle && (
+            <Text className="text-m3-body-small text-bbam-text-light mt-0.5">
+              {subtitle}
+            </Text>
+          )}
+        </View>
+      </View>
+
+      {/* RIGHT SIDE: keep it vertically centered */}
+      <View className="items-center justify-center">{right}</View>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View className="flex-1 bg-bbam-back-page">
+      <ScrollView contentContainerStyle={{ paddingBottom: 50 }}>
+        <View className="px-6 pt-14">
+          {/* HEADER */}
+          <View className="flex-row items-center justify-between mb-6">
+            <Text className="text-m3-headline-medium font-bold text-bbam-text-main">
+              Profile
+            </Text>
+
+            {!editMode && (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={enableEdit}
+                className="flex-row items-center"
+              >
+                <Ionicons name="create-outline" size={18} color="#585AD1" />
+                <Text className="ml-2 text-m3-body-medium font-bold text-bbam-indigo-main">
+                  Edit
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* PROFILE CARD */}
+          <Card className="mb-6">
+            <View className="flex-row items-center">
+              <View className="w-14 h-14 rounded-3xl bg-bbam-back-card items-center justify-center mr-4">
+                <Text className="text-m3-title-small font-bold text-bbam-indigo-main">
+                  {initials}
+                </Text>
+              </View>
+
+              <View className="flex-1">
+                <Text className="text-m3-body-large font-bold text-bbam-text-main">
+                  {userProfile?.username || "—"}
+                </Text>
+                <Text className="text-m3-body-small text-bbam-text-light mt-0.5">
+                  {userProfile?.email || "—"}
+                </Text>
+              </View>
+
+              <View className="bg-bbam-back-card px-3 py-2 rounded-2xl">
+                <Text className="text-m3-label-medium text-bbam-text-main">
+                  {userProfile?.gender || "—"}
+                </Text>
+              </View>
+            </View>
+
+            <View className="flex-row gap-3 mt-5">
+              <View className="flex-1 bg-bbam-back-card rounded-2xl p-4">
+                <Text className="text-m3-label-medium text-bbam-text-light">
+                  Age
+                </Text>
+                <Text className="text-m3-body-large font-bold text-bbam-text-main mt-1">
+                  {userProfile?.age ?? "—"}
+                </Text>
+              </View>
+
+              <View className="flex-1 bg-bbam-back-card rounded-2xl p-4">
+                <Text className="text-m3-label-medium text-bbam-text-light">
+                  Weight
+                </Text>
+                <Text className="text-m3-body-large font-bold text-bbam-text-main mt-1">
+                  {userProfile?.weight ?? "—"}{" "}
+                  <Text className="text-m3-body-small text-bbam-text-light">
+                    kg
+                  </Text>
+                </Text>
+              </View>
+
+              <View className="flex-1 bg-bbam-back-card rounded-2xl p-4">
+                <Text className="text-m3-label-medium text-bbam-text-light">
+                  Height
+                </Text>
+                <Text className="text-m3-body-large font-bold text-bbam-text-main mt-1">
+                  {userProfile?.height ?? "—"}{" "}
+                  <Text className="text-m3-body-small text-bbam-text-light">
+                    cm
+                  </Text>
+                </Text>
+              </View>
+            </View>
+          </Card>
+
+          {/* EDIT MODE */}
+          {editMode ? (
+            <>
+              <SectionTitle>Edit Profile</SectionTitle>
+              <Card className="mb-6">
+                <TextInput
+                  label="Age"
+                  placeholder="Age"
+                  value={ageInput}
+                  onChangeText={(v) => {
+                    setAgeInput(v);
+                    setHasUnsavedChanges(true);
+                  }}
+                />
+
+                <View className="mt-4" />
+
+                <TextInput
+                  label="Weight (kg)"
+                  placeholder="Weight"
+                  value={weightInput}
+                  onChangeText={(v) => {
+                    setWeightInput(v);
+                    setHasUnsavedChanges(true);
+                  }}
+                />
+
+                <View className="mt-4" />
+
+                <TextInput
+                  label="Height (cm)"
+                  placeholder="Height"
+                  value={heightInput}
+                  onChangeText={(v) => {
+                    setHeightInput(v);
+                    setHasUnsavedChanges(true);
+                  }}
+                />
+
+                <Text className="text-m3-label-large font-bold text-bbam-text-main mt-6 mb-3">
+                  Gender
+                </Text>
+
+                <View className="flex-row">
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => {
+                      setGenderInput("male");
+                      setHasUnsavedChanges(true);
+                    }}
+                    className={`flex-1 py-3.5 rounded-2xl items-center mr-3 ${
+                      genderInput === "male"
+                        ? "bg-bbam-indigo-main"
+                        : "bg-bbam-back-card"
+                    }`}
+                  >
+                    <Text
+                      className={`text-m3-body-large font-bold ${
+                        genderInput === "male"
+                          ? "text-white"
+                          : "text-bbam-indigo-main"
+                      }`}
+                    >
+                      Male
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => {
+                      setGenderInput("female");
+                      setHasUnsavedChanges(true);
+                    }}
+                    className={`flex-1 py-3.5 rounded-2xl items-center ${
+                      genderInput === "female"
+                        ? "bg-bbam-indigo-main"
+                        : "bg-bbam-back-card"
+                    }`}
+                  >
+                    <Text
+                      className={`text-m3-body-large font-bold ${
+                        genderInput === "female"
+                          ? "text-white"
+                          : "text-bbam-indigo-main"
+                      }`}
+                    >
+                      Female
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View className="mt-8">
+                  <Button title="Save Changes" onPress={handleSaveChanges} />
+                </View>
+                <View className="mt-3">
+                  <Button
+                    title="Cancel"
+                    variant="secondary"
+                    onPress={handleCancelEdit}
+                  />
+                </View>
+
+                {hasUnsavedChanges && (
+                  <Text className="text-m3-body-small text-bbam-text-light mt-4">
+                    You have unsaved changes.
+                  </Text>
+                )}
+              </Card>
+            </>
+          ) : (
+            <>
+              {/* VIEW MODE */}
+              <SectionTitle>Preferences</SectionTitle>
+              <Card className="mb-6">
+                <RowItem
+                  icon="notifications-outline"
+                  title="Workout Reminders"
+                  subtitle="Enable reminders for your workout plans"
+                  right={
+                    <Switch
+                      value={notificationsEnabled}
+                      onValueChange={toggleNotifications}
+                      trackColor={{ false: "#E5ECF3", true: "#585AD1" }}
+                      thumbColor="white"
+                      style={{
+                        transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }],
+                        marginTop: 2, // ✅ tiny iOS alignment fix
+                      }}
+                    />
+                  }
+                />
+              </Card>
+
+              <SectionTitle>Account</SectionTitle>
+              <Card className="mb-10">
+                <RowItem
+                  icon="key-outline"
+                  title="Change Password"
+                  subtitle="Placeholder"
+                  right={
+                    <Ionicons
+                      name="chevron-forward"
+                      size={18}
+                      color="#9DA3A9"
+                    />
+                  }
+                  onPress={() => {}}
+                />
+                <View className="h-[1px] bg-bbam-back-card" />
+                <RowItem
+                  icon="document-text-outline"
+                  title="Privacy Policy"
+                  subtitle="Placeholder"
+                  right={
+                    <Ionicons
+                      name="chevron-forward"
+                      size={18}
+                      color="#9DA3A9"
+                    />
+                  }
+                  onPress={() => {}}
+                />
+              </Card>
+
+              <Button
+                title="Logout"
+                variant="secondary"
+                onPress={handleLogout}
+              />
+            </>
+          )}
+        </View>
+      </ScrollView>
+
+      <StatusBar style="auto" />
+    </View>
+  );
+};
+
 export default ProfileSettingsScreen;

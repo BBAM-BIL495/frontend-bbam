@@ -4,50 +4,41 @@ import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import Button from "../../components/Button";
 import TextInput from "../../components/TextInput";
 
-const COLORS = {
-  pageBg: "#F7F9FA",
-  heroBg: "#E9EEF2",
-  primary: "#585AD1",
-  line: "#D1D5DB",
-  google: "#EA4335",
-  chipBg: "#E9EEF2",
-  text: "#1F2937",
-  muted: "#9DA3A9",
-};
-
 const OnboardingScreen = ({ navigation }) => {
-  const [currentView, setCurrentView] = useState("login"); // login | signup | setup
+  // ===== LLD ATTRIBUTES =====
+  const [currentView, setCurrentView] = useState("login"); // 'login' | 'signup' | 'setup'
 
-  // login
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // inputs
+  const [emailInput, setEmailInput] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
+  const [usernameInput, setUsernameInput] = useState("");
+  const [heightInput, setHeightInput] = useState("");
+  const [weightInput, setWeightInput] = useState("");
+  const [ageInput, setAgeInput] = useState("");
+  const [genderInput, setGenderInput] = useState("male");
 
-  // signup
-  const [username, setUsername] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  // extra fields you already had in UI
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState("");
   const [acceptedPolicy, setAcceptedPolicy] = useState(false);
 
-  // setup
-  const [age, setAge] = useState("");
-  const [weight, setWeight] = useState("");
-  const [height, setHeight] = useState("");
-  const [gender, setGender] = useState("male"); // male | female
+  // LLD attributes (not used for now, but exist)
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [deviceUuid, setDeviceUuid] = useState("");
+  const [expoPushToken, setExpoPushToken] = useState("");
 
   const isLogin = currentView === "login";
   const isSignup = currentView === "signup";
   const isSetup = currentView === "setup";
 
+  // ===== UI HELPERS =====
   const Divider = () => (
     <View className="flex-row items-center my-8">
-      <View
-        className="flex-1 h-[1px]"
-        style={{ backgroundColor: COLORS.line }}
-      />
-      <Text className="mx-3 text-gray-400">Or continue with</Text>
-      <View
-        className="flex-1 h-[1px]"
-        style={{ backgroundColor: COLORS.line }}
-      />
+      <View className="flex-1 h-[1px] bg-gray-300" />
+      <Text className="mx-3 text-bbam-text-light m3-body-small">
+        Or continue with
+      </Text>
+      <View className="flex-1 h-[1px] bg-gray-300" />
     </View>
   );
 
@@ -55,8 +46,7 @@ const OnboardingScreen = ({ navigation }) => {
     <View className="items-center">
       <TouchableOpacity
         activeOpacity={0.85}
-        className="w-14 h-14 rounded-full items-center justify-center"
-        style={{ backgroundColor: COLORS.google }}
+        className="w-14 h-14 rounded-full items-center justify-center bg-red-500"
         onPress={() => {}}
       >
         <Text className="text-white font-bold text-lg">G</Text>
@@ -64,41 +54,52 @@ const OnboardingScreen = ({ navigation }) => {
     </View>
   );
 
-  // actions (hook these to API later)
-  const handleLogin = () => navigation.navigate("MainTabs");
-  const handleContinue = () => setCurrentView("setup");
-  const handleFinish = () => navigation.navigate("MainTabs");
+  // ===== LLD METHODS (EMPTY STUBS FOR NOW) =====
+  const switchView = (view) => {
+    setCurrentView(view);
+  };
+
+  const validateInputs = () => {
+    // leave empty for now
+    return true;
+  };
+
+  const registerDeviceWithBackend = async () => {
+    // leave empty for now
+  };
+
+  const handleLogin = async () => {
+    // DIRECT LOGIN (as you requested)
+    navigation.navigate("MainTabs");
+  };
+
+  const handleSignup = async () => {
+    // NO LOGIC: just go to setup
+    switchView("setup");
+  };
+
+  const handleSetupComplete = async () => {
+    // DIRECT FINISH
+    navigation.navigate("MainTabs");
+  };
 
   return (
-    <View className="flex-1" style={{ backgroundColor: COLORS.pageBg }}>
+    <View className="flex-1 bg-bbam-back-page">
       <ScrollView
         contentContainerStyle={{ paddingBottom: 48 }}
         keyboardShouldPersistTaps="handled"
       >
-        {/* ===== LOGIN HERO (only on login screen) ===== */}
+        {/* ===== HERO (LOGIN ONLY) ===== */}
         {isLogin && (
-          <View
-            className="w-full items-center justify-center"
-            style={{ height: 300, backgroundColor: COLORS.heroBg }}
-          >
-            {/* Placeholder logo */}
-            <View
-              className="w-12 h-12 rounded-lg items-center justify-center mb-4"
-              style={{ backgroundColor: COLORS.primary }}
-            >
+          <View className="w-full h-[300px] bg-bbam-back-card items-center justify-center">
+            <View className="w-12 h-12 rounded-lg items-center justify-center mb-4 bg-bbam-indigo-main">
               <Text className="text-white font-bold">▢</Text>
             </View>
 
-            <Text
-              className="text-[34px] font-extrabold"
-              style={{ color: "#5A63E6" }}
-            >
+            <Text className="text-[34px] font-bold text-bbam-indigo-main">
               Body & Beyond
             </Text>
-            <Text
-              className="text-[22px] font-semibold -mt-1"
-              style={{ color: "#5A63E6" }}
-            >
+            <Text className="text-[22px] font-bold text-bbam-indigo-main -mt-1">
               AI Mentor
             </Text>
           </View>
@@ -109,10 +110,7 @@ const OnboardingScreen = ({ navigation }) => {
           {/* ===== LOGIN ===== */}
           {isLogin && (
             <>
-              <Text
-                className="text-[34px] font-semibold text-center mb-7"
-                style={{ color: COLORS.text }}
-              >
+              <Text className="text-[34px] font-bold text-center mb-7 text-bbam-text-main">
                 Welcome!
               </Text>
 
@@ -120,15 +118,12 @@ const OnboardingScreen = ({ navigation }) => {
                 label=""
                 placeholder="Email Address"
                 isPassword={false}
-                value={email}
-                onChangeText={setEmail}
+                value={emailInput}
+                onChangeText={setEmailInput}
               />
 
-              <TouchableOpacity className="items-end mt-2" onPress={() => {}}>
-                <Text
-                  className="font-semibold"
-                  style={{ color: COLORS.primary }}
-                >
+              <TouchableOpacity className="items-end mt-2">
+                <Text className="font-bold text-bbam-indigo-main">
                   Forgot password?
                 </Text>
               </TouchableOpacity>
@@ -138,8 +133,8 @@ const OnboardingScreen = ({ navigation }) => {
                   label=""
                   placeholder="Password"
                   isPassword={true}
-                  value={password}
-                  onChangeText={setPassword}
+                  value={passwordInput}
+                  onChangeText={setPasswordInput}
                 />
               </View>
 
@@ -156,12 +151,11 @@ const OnboardingScreen = ({ navigation }) => {
               <GoogleButton />
 
               <View className="flex-row justify-center mt-8">
-                <Text className="text-gray-400">Don’t have an account? </Text>
-                <TouchableOpacity onPress={() => setCurrentView("signup")}>
-                  <Text
-                    className="font-semibold"
-                    style={{ color: COLORS.primary }}
-                  >
+                <Text className="text-bbam-text-light">
+                  Don’t have an account?{" "}
+                </Text>
+                <TouchableOpacity onPress={() => switchView("signup")}>
+                  <Text className="font-bold text-bbam-indigo-main">
                     Sign up
                   </Text>
                 </TouchableOpacity>
@@ -169,58 +163,46 @@ const OnboardingScreen = ({ navigation }) => {
             </>
           )}
 
-          {/* ===== SIGN UP ===== */}
+          {/* ===== SIGNUP ===== */}
           {isSignup && (
             <>
-              <Text
-                className="text-[34px] font-semibold text-center mb-12"
-                style={{ color: COLORS.text }}
-              >
+              <Text className="text-[34px] font-bold text-center mb-12 text-bbam-text-main">
                 Create an Account
               </Text>
 
-              <Text
-                className="text-[18px] font-semibold mb-2"
-                style={{ color: COLORS.text }}
-              >
+              <Text className="text-[18px] font-bold mb-2 text-bbam-text-main">
                 Username
               </Text>
               <TextInput
                 label=""
                 placeholder="bbamtest"
                 isPassword={false}
-                value={username}
-                onChangeText={setUsername}
+                value={usernameInput}
+                onChangeText={setUsernameInput}
               />
 
               <View className="mt-6" />
-              <Text
-                className="text-[18px] font-semibold mb-2"
-                style={{ color: COLORS.text }}
-              >
+              <Text className="text-[18px] font-bold mb-2 text-bbam-text-main">
                 Email Address
               </Text>
               <TextInput
                 label=""
                 placeholder="name@email.com"
                 isPassword={false}
-                value={email}
-                onChangeText={setEmail}
+                value={emailInput}
+                onChangeText={setEmailInput}
               />
 
               <View className="mt-6" />
-              <Text
-                className="text-[18px] font-semibold mb-2"
-                style={{ color: COLORS.text }}
-              >
+              <Text className="text-[18px] font-bold mb-2 text-bbam-text-main">
                 Password
               </Text>
               <TextInput
                 label=""
                 placeholder="Create a password"
                 isPassword={true}
-                value={password}
-                onChangeText={setPassword}
+                value={passwordInput}
+                onChangeText={setPasswordInput}
               />
 
               <View className="mt-4">
@@ -228,32 +210,27 @@ const OnboardingScreen = ({ navigation }) => {
                   label=""
                   placeholder="Confirm password"
                   isPassword={true}
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
+                  value={confirmPasswordInput}
+                  onChangeText={setConfirmPasswordInput}
                 />
               </View>
 
-              {/* Checkbox row */}
+              {/* Checkbox */}
               <TouchableOpacity
                 className="flex-row items-center mt-6"
                 activeOpacity={0.85}
                 onPress={() => setAcceptedPolicy((v) => !v)}
               >
                 <View
-                  className="w-8 h-8 rounded-lg border-2"
-                  style={{
-                    borderColor: acceptedPolicy ? COLORS.primary : COLORS.muted,
-                    backgroundColor: acceptedPolicy
-                      ? COLORS.primary
-                      : "transparent",
-                  }}
+                  className={`w-8 h-8 rounded-lg border-2 ${
+                    acceptedPolicy
+                      ? "bg-bbam-indigo-main border-bbam-indigo-main"
+                      : "border-bbam-text-light"
+                  }`}
                 />
-                <Text
-                  className="ml-4 text-[16px]"
-                  style={{ color: COLORS.text }}
-                >
+                <Text className="ml-4 text-[16px] text-bbam-text-main">
                   By continuing, you agree to our{" "}
-                  <Text style={{ color: COLORS.primary, fontWeight: "700" }}>
+                  <Text className="text-bbam-indigo-main font-bold">
                     Privacy Policy
                   </Text>
                   .
@@ -264,7 +241,7 @@ const OnboardingScreen = ({ navigation }) => {
                 <Button
                   title="Continue"
                   variant="primary"
-                  onPress={handleContinue}
+                  onPress={handleSignup}
                   className="rounded-[28px] py-5"
                 />
               </View>
@@ -273,12 +250,11 @@ const OnboardingScreen = ({ navigation }) => {
               <GoogleButton />
 
               <View className="flex-row justify-center mt-8">
-                <Text className="text-gray-400">Already have an account? </Text>
-                <TouchableOpacity onPress={() => setCurrentView("login")}>
-                  <Text
-                    className="font-semibold"
-                    style={{ color: COLORS.primary }}
-                  >
+                <Text className="text-bbam-text-light">
+                  Already have an account?{" "}
+                </Text>
+                <TouchableOpacity onPress={() => switchView("login")}>
+                  <Text className="font-bold text-bbam-indigo-main">
                     Log in
                   </Text>
                 </TouchableOpacity>
@@ -290,97 +266,80 @@ const OnboardingScreen = ({ navigation }) => {
           {isSetup && (
             <>
               <TouchableOpacity
-                onPress={() => setCurrentView("signup")}
+                onPress={() => switchView("signup")}
                 className="flex-row items-center mb-12"
               >
-                <Text
-                  className="text-[28px] mr-2"
-                  style={{ color: COLORS.primary }}
-                >
+                <Text className="text-[28px] mr-2 text-bbam-indigo-main">
                   ‹
                 </Text>
-                <Text className="text-[20px]" style={{ color: COLORS.text }}>
-                  Back
-                </Text>
+                <Text className="text-[20px] text-bbam-text-main">Back</Text>
               </TouchableOpacity>
 
               <Text
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.9}
-                className="text-[34px] font-semibold mb-10"
-                style={{ color: COLORS.text }}
+                className="text-[34px] font-bold mb-10 text-bbam-text-main"
               >
                 Set Up Your Account
               </Text>
 
-              <Text
-                className="text-[18px] font-semibold mb-2"
-                style={{ color: COLORS.text }}
-              >
+              <Text className="text-[18px] font-bold mb-2 text-bbam-text-main">
                 Age
               </Text>
               <TextInput
                 label=""
                 placeholder="21"
                 isPassword={false}
-                value={age}
-                onChangeText={setAge}
+                value={ageInput}
+                onChangeText={setAgeInput}
               />
 
               <View className="mt-6" />
-              <Text
-                className="text-[18px] font-semibold mb-2"
-                style={{ color: COLORS.text }}
-              >
+              <Text className="text-[18px] font-bold mb-2 text-bbam-text-main">
                 Weight
               </Text>
               <TextInput
                 label=""
                 placeholder=""
                 isPassword={false}
-                value={weight}
-                onChangeText={setWeight}
+                value={weightInput}
+                onChangeText={setWeightInput}
               />
 
               <View className="mt-6" />
-              <Text
-                className="text-[18px] font-semibold mb-2"
-                style={{ color: COLORS.text }}
-              >
+              <Text className="text-[18px] font-bold mb-2 text-bbam-text-main">
                 Height
               </Text>
               <TextInput
                 label=""
                 placeholder=""
                 isPassword={false}
-                value={height}
-                onChangeText={setHeight}
+                value={heightInput}
+                onChangeText={setHeightInput}
               />
 
               <View className="mt-8" />
-              <Text
-                className="text-[18px] font-semibold mb-4"
-                style={{ color: COLORS.text }}
-              >
+              <Text className="text-[18px] font-bold mb-4 text-bbam-text-main">
                 Gender
               </Text>
 
               <View className="flex-row">
                 <TouchableOpacity
                   activeOpacity={0.85}
-                  onPress={() => setGender("male")}
-                  className="flex-1 py-3.5 rounded-2xl items-center mr-3"
-                  style={{
-                    backgroundColor:
-                      gender === "male" ? COLORS.primary : COLORS.chipBg,
-                  }}
+                  onPress={() => setGenderInput("male")}
+                  className={`flex-1 py-3.5 rounded-2xl items-center mr-3 ${
+                    genderInput === "male"
+                      ? "bg-bbam-indigo-main"
+                      : "bg-bbam-back-card"
+                  }`}
                 >
                   <Text
-                    className="text-[18px] font-semibold"
-                    style={{
-                      color: gender === "male" ? "#fff" : COLORS.primary,
-                    }}
+                    className={`text-[18px] font-bold ${
+                      genderInput === "male"
+                        ? "text-white"
+                        : "text-bbam-indigo-main"
+                    }`}
                   >
                     Male
                   </Text>
@@ -388,18 +347,19 @@ const OnboardingScreen = ({ navigation }) => {
 
                 <TouchableOpacity
                   activeOpacity={0.85}
-                  onPress={() => setGender("female")}
-                  className="flex-1 py-3.5 rounded-2xl items-center"
-                  style={{
-                    backgroundColor:
-                      gender === "female" ? COLORS.primary : COLORS.chipBg,
-                  }}
+                  onPress={() => setGenderInput("female")}
+                  className={`flex-1 py-3.5 rounded-2xl items-center ${
+                    genderInput === "female"
+                      ? "bg-bbam-indigo-main"
+                      : "bg-bbam-back-card"
+                  }`}
                 >
                   <Text
-                    className="text-[18px] font-semibold"
-                    style={{
-                      color: gender === "female" ? "#fff" : COLORS.primary,
-                    }}
+                    className={`text-[18px] font-bold ${
+                      genderInput === "female"
+                        ? "text-white"
+                        : "text-bbam-indigo-main"
+                    }`}
                   >
                     Female
                   </Text>
@@ -410,7 +370,7 @@ const OnboardingScreen = ({ navigation }) => {
                 <Button
                   title="Sign Up"
                   variant="primary"
-                  onPress={handleFinish}
+                  onPress={handleSetupComplete}
                   className="rounded-[28px] py-5"
                 />
               </View>
