@@ -1,9 +1,48 @@
-import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo, useState } from "react";
-import { View, Text, Switch, TouchableOpacity, ScrollView } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import Button from "../../components/Button";
-import TextInput from "../../components/TextInput";
+import { StatusBar } from 'expo-status-bar';
+import { useEffect, useMemo, useState } from 'react';
+import { View, Text, Switch, TouchableOpacity, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import Button from '../../components/Button';
+import TextInput from '../../components/TextInput';
+
+const SectionTitle = ({ children }) => (
+  <Text className='text-m3-label-large font-bold text-bbam-text-main mb-3'>
+    {children}
+  </Text>
+);
+
+const Card = ({ children, className = '' }) => (
+  <View className={`bg-white rounded-3xl p-5 shadow-sm ${className}`}>
+    {children}
+  </View>
+);
+
+const RowItem = ({ icon, title, subtitle, right, onPress }) => (
+  <TouchableOpacity
+    activeOpacity={onPress ? 0.7 : 1}
+    onPress={onPress}
+    className='flex-row items-center justify-between py-3'
+  >
+    <View className='flex-row items-center flex-1 pr-3'>
+      <View className='w-10 h-10 rounded-2xl bg-bbam-back-card items-center justify-center mr-3'>
+        <Ionicons name={icon} size={20} color='#585AD1' />
+      </View>
+      <View className='flex-1'>
+        <Text className='text-m3-body-large font-bold text-bbam-text-main'>
+          {title}
+        </Text>
+        {!!subtitle && (
+          <Text className='text-m3-body-small text-bbam-text-light mt-0.5'>
+            {subtitle}
+          </Text>
+        )}
+      </View>
+    </View>
+
+    {/* RIGHT SIDE: keep it vertically centered */}
+    <View className='items-center justify-center'>{right}</View>
+  </TouchableOpacity>
+);
 
 const ProfileSettingsScreen = ({ navigation }) => {
   const [userProfile, setUserProfile] = useState(null);
@@ -108,45 +147,6 @@ const ProfileSettingsScreen = ({ navigation }) => {
       });
     } catch (e) {}
   };
-
-  const SectionTitle = ({ children }) => (
-    <Text className="text-m3-label-large font-bold text-bbam-text-main mb-3">
-      {children}
-    </Text>
-  );
-
-  const Card = ({ children, className = "" }) => (
-    <View className={`bg-white rounded-3xl p-5 shadow-sm ${className}`}>
-      {children}
-    </View>
-  );
-
-  const RowItem = ({ icon, title, subtitle, right, onPress }) => (
-    <TouchableOpacity
-      activeOpacity={onPress ? 0.7 : 1}
-      onPress={onPress}
-      className="flex-row items-center justify-between py-3"
-    >
-      <View className="flex-row items-center flex-1 pr-3">
-        <View className="w-10 h-10 rounded-2xl bg-bbam-back-card items-center justify-center mr-3">
-          <Ionicons name={icon} size={20} color="#585AD1" />
-        </View>
-        <View className="flex-1">
-          <Text className="text-m3-body-large font-bold text-bbam-text-main">
-            {title}
-          </Text>
-          {!!subtitle && (
-            <Text className="text-m3-body-small text-bbam-text-light mt-0.5">
-              {subtitle}
-            </Text>
-          )}
-        </View>
-      </View>
-
-      {/* RIGHT SIDE: keep it vertically centered */}
-      <View className="items-center justify-center">{right}</View>
-    </TouchableOpacity>
-  );
 
   return (
     <View className="flex-1 bg-bbam-back-page">
