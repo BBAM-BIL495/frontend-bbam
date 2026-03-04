@@ -1,13 +1,21 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Switch, Modal } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Notifications from 'expo-notifications';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import CardItem from '../../components/CardItem';
 import Button from '../../components/Button';
 import PressableAnimated from '../../components/PressableAnimated';
+import ReminderSection from '../../components/ReminderSection';
 
 const WorkoutDetailsScreen = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
+
+  // these are not on lld. used for the datetimepicker
+  const [currentSchedule, setCurrentSchedule] = useState(null);
+  const [reminderTime, setReminderTime] = useState(new Date());
+  const [reminderFrequency, setReminderFrequency] = useState('Daily'); // Daily, Weekly, Once
 
   // mock attributes and methods according to lld
   const [isLocalAlarmScheduled, setIsLocalAlarmScheduled] = useState(false);
@@ -33,11 +41,44 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
     navigation.navigate('LiveSession');
   };
   const handleEditWorkout = () => {};
-  const handleSetReminder = (time) => {
+
+  const handleSetReminder = () => {
     setIsLocalAlarmScheduled(previousState => !previousState);
   };
-  const scheduleLocalNotification = (time) => {};
+
+  const scheduleLocalNotification = async (time) => {
+    if (!schedule) return;
+
+    await Notifications.cancelAllScheduledNotificationsAsync();
+
+    let trigger;
+    if (schedule.frequency === 'Daily') {
+      trigger = { hour: schedule.hour, minute: schedule.minute, repeats: true };
+    } else if (schedule.frequency === 'Weekly') {
+      // expo-notifications uses 1 for Sunday, 7 for Saturday. UI uses 0 for Monday, 6 for Sunday
+      trigger = { weekday: (schedule.day === 6 ? 1 : schedule.day + 2), hour: schedule.hour, minute: schedule.minute, repeats: true };
+    } else {
+      // One-time notification
+      const triggerDate = new Date(schedule.date);
+      triggerDate.setHours(schedule.hour, schedule.minute, 0);
+      trigger = triggerDate;
+    }
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Workout Time! 🏋️‍♂️",
+        body: `Ready for ${workoutPlan.name}?`,
+        data: { planId: workoutPlan.id },
+      },
+      trigger
+    });
+  };
+
   const calculateDuration = () => {};
+
+  useEffect(() => {
+    console.log(currentSchedule);
+  }, [currentSchedule]);
 
   return (
     <View className="flex-1 bg-bbam-back-page" style={{ paddingTop: insets.top }}>
@@ -69,7 +110,7 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
           </View>
         </View>
 
-        {/* 3. SCROLLABLE EXERCISE LIST */}
+        {/* Exercise List */}
         <ScrollView
           vertical
           alwaysBounceVertical={false}
@@ -88,27 +129,20 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
         </ScrollView> 
       </View>
 
-      {/* 4. STATIC FOOTER (Reminders & Start Button) */}
+      {/* Reminders & Start Button */}
       <View
         className="bg-white rounded-t-[32px] px-6 pt-8 shadow-lg"
         style={{ paddingBottom: insets.bottom + 20 }}
       >
-        <View className="flex-row justify-between items-center mb-8">
-          <View className="ml-2">
-            <Text className="text-m3-body-medium font-bold text-bbam-text-main">
-              Reminders
-            </Text>
-            <Text className="text-m3-body-small">
-              Every Day, 7 PM
-            </Text>
-          </View>
-          <Switch
-            trackColor={{ false: '#E5ECF3', true: '#585AD1' }}
-            thumbColor="white"
-            onValueChange={() => handleSetReminder()}
-            value={isLocalAlarmScheduled}
-          />
-        </View>
+        <ReminderSection
+          isScheduled={isLocalAlarmScheduled}
+          onScheduleUpdate={setCurrentSchedule}
+          onToggle={handleSetReminder}
+          reminderTime={reminderTime}
+          setReminderTime={setReminderTime}
+          frequency={reminderFrequency}
+          setFrequency={setReminderFrequency}
+        />
 
         <Button
           title="Start Workout"
