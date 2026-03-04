@@ -18,7 +18,9 @@
     },
     "android": {
       "package": "com.bbam.bodybeyond",
-      "permissions": ["android.permission.CAMERA"],
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -51,7 +53,8 @@
           }
         }
       ],
-      "react-native-vision-camera"
+      "react-native-vision-camera",
+      "@react-native-community/datetimepicker"
     ]
   }
 }
