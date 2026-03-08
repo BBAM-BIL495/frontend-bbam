@@ -46,21 +46,21 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
     setIsLocalAlarmScheduled(previousState => !previousState);
   };
 
-  const scheduleLocalNotification = async (time) => {
-    if (!schedule) return;
+  const scheduleLocalNotification = async () => {
+    if (!currentSchedule) return;
 
     await Notifications.cancelAllScheduledNotificationsAsync();
 
     let trigger;
-    if (schedule.frequency === 'Daily') {
-      trigger = { hour: schedule.hour, minute: schedule.minute, repeats: true };
-    } else if (schedule.frequency === 'Weekly') {
+    if (currentSchedule.frequency === 'Daily') {
+      trigger = { hour: currentSchedule.hour, minute: currentSchedule.minute, repeats: true };
+    } else if (currentSchedule.frequency === 'Weekly') {
       // expo-notifications uses 1 for Sunday, 7 for Saturday. UI uses 0 for Monday, 6 for Sunday
-      trigger = { weekday: (schedule.day === 6 ? 1 : schedule.day + 2), hour: schedule.hour, minute: schedule.minute, repeats: true };
+      trigger = { weekday: (currentSchedule.day === 6 ? 1 : currentSchedule.day + 2), hour: currentSchedule.hour, minute: currentSchedule.minute, repeats: true };
     } else {
       // One-time notification
-      const triggerDate = new Date(schedule.date);
-      triggerDate.setHours(schedule.hour, schedule.minute, 0);
+      const triggerDate = new Date(currentSchedule.date);
+      triggerDate.setHours(currentSchedule.hour, currentSchedule.minute, 0);
       trigger = triggerDate;
     }
 
