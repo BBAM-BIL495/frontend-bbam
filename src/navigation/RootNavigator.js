@@ -3,6 +3,7 @@ import { createNativeStackNavigator  } from '@react-navigation/native-stack';
 import TabNavigator from './TabNavigator';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import WorkoutDetailsScreen from '../screens/WorkoutDetailsScreen';
+import WorkoutEditScreen from '../screens/WorkoutEditScreen';
 import LiveSessionScreen from '../screens/LiveSessionScreen/index';
 
 const Stack = createNativeStackNavigator();
@@ -19,6 +20,14 @@ const RootNavigator = () => {
         component={WorkoutDetailsScreen} 
         options={{
           animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen 
+        name="WorkoutEdit" 
+        component={WorkoutEditScreen} 
+        options={{
+          presentation: 'fullScreenModal',
+          animation: 'slide_from_right'
         }}
       />
       <Stack.Screen

@@ -26,13 +26,13 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
   
   // exerciseList would normally come from an api call to get workout details
   const exerciseList = [
-    { id: '1', name: 'Squat', value: '12 Reps' },
-    { id: '2', name: 'Plank', value: '60 Seconds' },
-    { id: '3', name: 'Push-Up', value: '10 Reps' },
-    { id: '4', name: 'Squat', value: '12 Reps' },
-    { id: '5', name: 'Lunge', value: '10 Reps' },
-    { id: '6', name: 'Biceps Curl', value: '15 Reps' },
-    { id: '7', name: 'Plank', value: '60 Seconds' }
+    { id: '1', name: 'Squat', value: '12', unit: 'rep' },
+    { id: '2', name: 'Plank', value: '60', unit: 'sec'},
+    { id: '3', name: 'Push-Up', value: '10', unit: 'rep'},
+    { id: '4', name: 'Squat', value: '12', unit: 'rep'},
+    { id: '5', name: 'Lunge', value: '10', unit: 'rep'},
+    { id: '6', name: 'Biceps Curl', value: '15', unit: 'rep'},
+    { id: '7', name: 'Plank', value: '60', unit: 'sec' }
   ];
 
   const loadWorkoutPlan = (planId) => {};
@@ -40,7 +40,9 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
     console.log('pressed Start Workout');
     navigation.navigate('LiveSession');
   };
-  const handleEditWorkout = () => {};
+  const handleEditWorkout = () => {
+    navigation.navigate('WorkoutEdit', { editMode: true, workout: { ...workoutPlan, exerciseList} });
+  };
 
   const handleSetReminder = () => {
     setIsLocalAlarmScheduled(previousState => !previousState);

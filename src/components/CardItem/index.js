@@ -79,7 +79,7 @@ const CardItem = ({
               <PressableAnimated onPress={onCopy} hitSlop={10} transform>
                 <Ionicons name='copy-outline' size={20} color='#585AD1' />
               </PressableAnimated>
-              <PressableAnimated onPress={onDrag} hitSlop={10} transform>
+              <PressableAnimated onPressIn={onDrag} hitSlop={10} transform>
                 <Ionicons name='menu' size={20} color='#585AD1' />
               </PressableAnimated>
             </>
@@ -90,4 +90,4 @@ const CardItem = ({
   );
 };
 
-export default CardItem;
+export default React.memo(CardItem);

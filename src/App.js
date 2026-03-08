@@ -1,6 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { useFonts, Roboto_400Regular, Roboto_500Medium } from '@expo-google-fonts/roboto';
-import { View, ActivityIndicator } from 'react-native'; 
+import { View, ActivityIndicator } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import RootNavigator from './navigation/RootNavigator';
 import '../global.css';
 
@@ -19,8 +20,10 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <RootNavigator />
-    </NavigationContainer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <NavigationContainer>
+        <RootNavigator />
+      </NavigationContainer> 
+    </GestureHandlerRootView>
   );
 }

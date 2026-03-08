@@ -28,7 +28,9 @@ const HomeScreen = ({ navigation }) => {
 
   const loadWorkoutPlans = () => {};
   const loadUserProfile = () => {};
-  const navigateToCreateWorkout = () => {};
+  const navigateToCreateWorkout = () => {
+    navigation.navigate('WorkoutEdit', { editMode: false });
+  };
   const navigateToWorkoutDetails = (workout) => {
     navigation.navigate('WorkoutDetails', {
       workoutPlan: workout
