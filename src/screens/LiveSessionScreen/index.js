@@ -2,10 +2,16 @@ import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { RNMediapipe } from '@thinksys/react-native-mediapipe';
 import { Ionicons } from '@expo/vector-icons';
+import { evaluateForm } from '../../utils/ruleEngine';
 
 const PoseDetectionScreen = ({ navigation }) => {
+  const [feedback, setFeedback] = useState("Align your body...");
+
   const handleLandmarks = (data) => {
-    console.log("Landmarks detected:", data);
+    if (data && data.landmarks) {
+      const evaluation = evaluateForm(data.landmarks, 'Squat');
+      setFeedback(evaluation.message);
+    }
   };
 
   return (
@@ -34,6 +40,13 @@ const PoseDetectionScreen = ({ navigation }) => {
           <Ionicons name="close" size={28} color="white" />
         </TouchableOpacity>
       </View>
+      
+      <View className="absolute bottom-20 self-center bg-bbam-indigo-main/80 px-6 py-4 rounded-3xl">
+        <Text className="text-white font-bold text-center text-m3-body-large">
+          {feedback}
+        </Text>
+      </View>
+      
     </View>
   );
 };
