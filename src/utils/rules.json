@@ -99,5 +99,44 @@
         "message": "Keep your torso upright! You are leaning too far forward."
       }
     ]
+  },
+  "Jumping-Jack": {
+    "rules": [
+      {
+        "id": "JJ-01",
+        "name": "Arm Width",
+        "joints": [11, 0, 12],
+        "minAngle": 60,
+        "maxAngle": 180,
+        "errorCondition": "angle < 60",
+        "message": "Clap your hands at the top! Bring your arms higher."
+      }
+    ]
+  },
+  "Shoulder-Press": {
+    "rules": [
+      {
+        "id": "SP-01",
+        "name": "Elbow Flare",
+        "joints": [12, 14, 16],
+        "minAngle": 70,
+        "maxAngle": 180,
+        "errorCondition": "angle < 70",
+        "message": "Don't drop your elbows too low! Keep them at 90 degrees or slightly above."
+      }
+    ]
+  },
+  "Glute-Bridge": {
+    "rules": [
+      {
+        "id": "GB-01",
+        "name": "Hip Extension",
+        "joints": [12, 24, 26],
+        "minAngle": 160,
+        "maxAngle": 190,
+        "errorCondition": "angle < 160",
+        "message": "Squeeze your glutes! Push your hips higher toward the ceiling."
+      }
+    ]
   }
 }

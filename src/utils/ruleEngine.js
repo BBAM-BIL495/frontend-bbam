@@ -6,7 +6,11 @@ export const evaluateForm = (landmarks, exerciseType) => {
   const currentExercise = exerciseRules[exerciseType];
 
   if (!currentExercise) return feedback;
-
+{/* 
+const leftSideJoints = [23, 25, 27]; // Left Hip, Knee, Ankle
+const rightSideJoints = [24, 26, 28]; // Right Hip, Knee, Ankle
+use the one with higher "visibility" score
+*/}
   for (const rule of currentExercise.rules) {
     const p1 = landmarks[rule.joints[0]];
     const p2 = landmarks[rule.joints[1]];
