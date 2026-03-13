@@ -28,3 +28,17 @@ export const calculateAngle3D = (p1, p2, p3) => {
 
   return Math.round((angle * 180.0) / Math.PI);
 };
+
+export const mapMediaPipeToInternal = (rawLandmarks) => {
+  if (!rawLandmarks || !Array.isArray(rawLandmarks)) return {};
+
+  return rawLandmarks.reduce((acc, landmark, index) => {
+    acc[index] = {
+      x: landmark.x,
+      y: landmark.y,
+      z: landmark.z || 0,
+      visibility: landmark.visibility || landmark.presence || 0
+    };
+    return acc;
+  }, {});
+};
