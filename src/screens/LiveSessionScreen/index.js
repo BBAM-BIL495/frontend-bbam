@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { View, TouchableOpacity, Text } from 'react-native';
 import { RNMediapipe } from '@thinksys/react-native-mediapipe';
 import { Ionicons } from '@expo/vector-icons';
