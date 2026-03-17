@@ -35,10 +35,7 @@ const OnboardingScreen = ({ navigation }) => {
   const isSetup = currentView === "setup";
 
   useEffect(() => {
-    if (isLoginPending) {
-      setIsLoading(true);
-    }
-    setIsLoading(false);
+    setIsLoading(isLoginPending);
   }, [isLoginPending]);
 
   // ===== UI HELPERS =====

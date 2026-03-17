@@ -41,8 +41,11 @@ const HomeScreen = ({ navigation }) => {
 
   useEffect(() => {
     loadUserProfile();
+  }, [userData]);
+
+  useEffect(() => {
     loadWorkoutPlans();
-  }, []);
+  }, [workoutPlans]);
 
   return (
     <View className="flex-1 bg-bbam-back-page" style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>

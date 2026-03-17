@@ -41,3 +41,24 @@ export const useLogin = () => {
     },
   });
 };
+
+export const useUpdateProfile = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (updatedFields) => {
+      const userId = await SecureStore.getItemAsync('userId');
+      const { data } = await api.patch(`/users/profiles/${userId}/`, updatedFields);
+      return data;
+    },
+    onSuccess: (data) => {
+      // refresh the user cache so Home and ProfileSettings show the new data instantly
+      const previousData = queryClient.getQueryData(['user']);
+      queryClient.setQueryData(['user'], {
+        ...previousData,
+        ...data
+      });
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+    },
+  });
+};

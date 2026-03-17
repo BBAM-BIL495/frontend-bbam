@@ -2,11 +2,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, Switch, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, Switch, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Button from '../../components/Button';
 import TextInput from '../../components/TextInput';
-import { useUser } from '../../hooks/useAuth';
+import { useUser, useUpdateProfile } from '../../hooks/useAuth';
 
 const SectionTitle = ({ children }) => (
   <Text className='text-m3-label-large font-bold text-bbam-text-main mb-3'>
@@ -51,6 +51,7 @@ const ProfileSettingsScreen = ({ navigation }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [editMode, setEditMode] = useState(false);
 
+  const [usernameInput, setUsernameInput] = useState("");
   const [heightInput, setHeightInput] = useState("");
   const [weightInput, setWeightInput] = useState("");
   const [ageInput, setAgeInput] = useState("");
@@ -59,10 +60,11 @@ const ProfileSettingsScreen = ({ navigation }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState({});
 
   const queryClient = useQueryClient();
   const { data: userData } = useUser();
+  const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
 
   useEffect(() => {
     loadProfile();
@@ -70,7 +72,7 @@ const ProfileSettingsScreen = ({ navigation }) => {
   }, []);
 
   const initials = useMemo(() => {
-    const name = userProfile?.username || "";
+    const name = userProfile?.user_name || "";
     const parts = name.trim().split(" ").filter(Boolean);
     if (!parts.length) return "U";
     const first = parts[0]?.[0] || "U";
@@ -85,10 +87,10 @@ const ProfileSettingsScreen = ({ navigation }) => {
       const storedEmail = await SecureStore.getItemAsync('userEmail');
 
       setUserProfile({
-        username: userData.user_name,
+        user_name: userData.user_name,
         email: storedEmail,
-        height: userData.height_cm,
-        weight: userData.weight_kg,
+        height_cm: userData.height_cm,
+        weight_kg: userData.weight_kg,
         age: userData.age,
         gender: userData.gender
       });
@@ -102,13 +104,15 @@ const ProfileSettingsScreen = ({ navigation }) => {
   const enableEdit = () => {
     if (!userProfile) return;
 
-    setHeightInput(String(userProfile.height ?? ""));
-    setWeightInput(String(userProfile.weight ?? ""));
+    setUsernameInput(userProfile.user_name ?? "");
+    setHeightInput(String(userProfile.height_cm ?? ""));
+    setWeightInput(String(userProfile.weight_kg ?? ""));
     setAgeInput(String(userProfile.age ?? ""));
     setGenderInput(userProfile.gender ?? "male");
 
     setEditMode(true);
     setHasUnsavedChanges(false);
+    setErrorMessage({});
   };
 
   const validateInputs = () => {
@@ -138,22 +142,35 @@ const ProfileSettingsScreen = ({ navigation }) => {
   const handleSaveChanges = async () => {
     if (!validateInputs()) return;
 
-    setUserProfile((prev) => ({
-      ...prev,
-      height: Number(heightInput),
-      weight: Number(weightInput),
+    const updateData = {
+      user_name: usernameInput,
+      height_cm: Number(heightInput),
+      weight_kg: Number(weightInput),
       age: Number(ageInput),
       gender: genderInput,
-    }));
-    //todo put new profile data to users/profiles/id
+    }
 
-    setEditMode(false);
-    setHasUnsavedChanges(false);
+    updateProfile(updateData, {
+      onSuccess: () => {
+        setUserProfile((prev) => ({
+          ...prev,
+          ...updateData
+        }));
+        setEditMode(false);
+        setHasUnsavedChanges(false);
+        Alert.alert("Success", "Profile updated successfully!");
+      },
+      onError: (error) => {
+        console.log(error);
+        setErrorMessage({ edit: "Failed to update profile." });
+      }
+    });
   };
 
   const handleCancelEdit = () => {
     setEditMode(false);
     setHasUnsavedChanges(false);
+    setErrorMessage({});
   };
 
   const setupNotificationListeners = () => {
@@ -166,7 +183,7 @@ const ProfileSettingsScreen = ({ navigation }) => {
   };
 
   const handleLogout = async () => {
-    setErrorMessage("");
+    setErrorMessage({});
     try {
       // TODO later:
       // - cancel notifications (expo-notifications)
@@ -181,7 +198,7 @@ const ProfileSettingsScreen = ({ navigation }) => {
     } catch (e) {
       setIsLoading(false);
       console.log(e);
-      setErrorMessage("Failed to log out.");
+      setErrorMessage({ logout: "Failed to log out." });
     }
   };
 
@@ -220,7 +237,7 @@ const ProfileSettingsScreen = ({ navigation }) => {
 
               <View className="flex-1">
                 <Text className="text-m3-body-large font-bold text-bbam-text-main">
-                  {userProfile?.username || "—"}
+                  {userProfile?.user_name || "—"}
                 </Text>
                 <Text className="text-m3-body-small text-bbam-text-light mt-0.5">
                   {userProfile?.email || "—"}
@@ -249,7 +266,7 @@ const ProfileSettingsScreen = ({ navigation }) => {
                   Weight
                 </Text>
                 <Text className="text-m3-body-large font-bold text-bbam-text-main mt-1">
-                  {userProfile?.weight ?? "—"}{" "}
+                  {userProfile?.weight_kg ?? "—"}{" "}
                   <Text className="text-m3-body-small text-bbam-text-light">
                     kg
                   </Text>
@@ -261,7 +278,7 @@ const ProfileSettingsScreen = ({ navigation }) => {
                   Height
                 </Text>
                 <Text className="text-m3-body-large font-bold text-bbam-text-main mt-1">
-                  {userProfile?.height ?? "—"}{" "}
+                  {userProfile?.height_cm ?? "—"}{" "}
                   <Text className="text-m3-body-small text-bbam-text-light">
                     cm
                   </Text>
@@ -275,6 +292,18 @@ const ProfileSettingsScreen = ({ navigation }) => {
             <>
               <SectionTitle>Edit Profile</SectionTitle>
               <Card className="mb-6">
+                <TextInput
+                  label="Username"
+                  placeholder="username"
+                  value={usernameInput}
+                  onChangeText={(v) => {
+                    setUsernameInput(v);
+                    setHasUnsavedChanges(true);
+                  }}
+                />
+
+                <View className="mt-4" />
+
                 <TextInput
                   label="Age"
                   placeholder="Age"
@@ -363,7 +392,7 @@ const ProfileSettingsScreen = ({ navigation }) => {
                 </View>
 
                 <View className="mt-8">
-                  <Button title="Save Changes" onPress={handleSaveChanges} />
+                  <Button title="Save Changes" onPress={handleSaveChanges} isLoading={isUpdating} />
                 </View>
                 <View className="mt-3">
                   <Button
@@ -372,6 +401,11 @@ const ProfileSettingsScreen = ({ navigation }) => {
                     onPress={handleCancelEdit}
                   />
                 </View>
+                {errorMessage.edit && (
+                  <Text className="mt-2 text-red-600 text-m3-body-small font-bold text-center">
+                    {errorMessage.edit}
+                  </Text>
+                )}
 
                 {hasUnsavedChanges && (
                   <Text className="text-m3-body-small text-bbam-text-light mt-4">
@@ -442,9 +476,9 @@ const ProfileSettingsScreen = ({ navigation }) => {
                 isLoading={isLoading}
               />
 
-              {errorMessage && (
+              {errorMessage.logout && (
                 <Text className="text-red-600 text-m3-body-small font-bold text-center">
-                  {errorMessage}
+                  {errorMessage.logout}
                 </Text>
               )}
             </>
