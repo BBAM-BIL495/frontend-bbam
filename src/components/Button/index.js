@@ -1,8 +1,8 @@
 import React from 'react';
-import { Text } from 'react-native';
+import { Text, View, ActivityIndicator } from 'react-native';
 import PressableAnimated from '../PressableAnimated';
 
-const Button = ({ title, onPress, variant = 'primary', className = ''}) => {
+const Button = ({ title, onPress, variant = 'primary', className = '', isLoading = false}) => {
   const isPrimary = variant === 'primary';
 
   return (
@@ -14,9 +14,15 @@ const Button = ({ title, onPress, variant = 'primary', className = ''}) => {
       className={`w-full p-4 rounded-2xl items-center justify-center ${isPrimary ? '' : 'border-[1.5px] border-bbam-indigo-main'} ${className}`}
       accessibilityRole='button'
     >
-      <Text className={`h-6 text-center text-m3-body-large font-bold ${isPrimary ? 'text-white' : 'text-bbam-indigo-main'}`}>
-        {title}
-      </Text>
+      {isLoading ? (
+        <View className='flex-1 items-center justify-center'>
+          <ActivityIndicator size="large" />
+        </View>
+      ) : (
+        <Text className={`h-6 text-center text-m3-body-large font-bold ${isPrimary ? 'text-white' : 'text-bbam-indigo-main'}`}>
+          {title}
+        </Text>
+      )}
     </PressableAnimated>
   );
 };

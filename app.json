@@ -54,7 +54,8 @@
         }
       ],
       "react-native-vision-camera",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-secure-store"
     ]
   }
 }

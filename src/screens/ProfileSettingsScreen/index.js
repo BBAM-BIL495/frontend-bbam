@@ -1,9 +1,12 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
+import * as SecureStore from 'expo-secure-store';
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, Switch, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Button from '../../components/Button';
 import TextInput from '../../components/TextInput';
+import { useUser } from '../../hooks/useAuth';
 
 const SectionTitle = ({ children }) => (
   <Text className='text-m3-label-large font-bold text-bbam-text-main mb-3'>
@@ -56,6 +59,10 @@ const ProfileSettingsScreen = ({ navigation }) => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const queryClient = useQueryClient();
+  const { data: userData } = useUser();
 
   useEffect(() => {
     loadProfile();
@@ -75,17 +82,17 @@ const ProfileSettingsScreen = ({ navigation }) => {
   const loadProfile = async () => {
     try {
       setIsLoading(true);
+      const storedEmail = await SecureStore.getItemAsync('userEmail');
 
-      const mockProfile = {
-        username: "Melis Sezer",
-        height: 170,
-        weight: 60,
-        age: 23,
-        gender: "female",
-        email: "melis@example.com",
-      };
+      setUserProfile({
+        username: userData.user_name,
+        email: storedEmail,
+        height: userData.height_cm,
+        weight: userData.weight_kg,
+        age: userData.age,
+        gender: userData.gender
+      });
 
-      setUserProfile(mockProfile);
       setIsLoading(false);
     } catch (e) {
       setIsLoading(false);
@@ -138,6 +145,7 @@ const ProfileSettingsScreen = ({ navigation }) => {
       age: Number(ageInput),
       gender: genderInput,
     }));
+    //todo put new profile data to users/profiles/id
 
     setEditMode(false);
     setHasUnsavedChanges(false);
@@ -158,16 +166,23 @@ const ProfileSettingsScreen = ({ navigation }) => {
   };
 
   const handleLogout = async () => {
+    setErrorMessage("");
     try {
       // TODO later:
       // - cancel notifications (expo-notifications)
-      // - remove JWT from AsyncStorage
 
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Login" }],
-      });
-    } catch (e) {}
+      setIsLoading(true);
+      await SecureStore.deleteItemAsync('userToken');
+      await SecureStore.deleteItemAsync('userId');
+      // force to login screen
+      queryClient.setQueryData(['user'], null);
+      queryClient.clear();
+      setIsLoading(false);
+    } catch (e) {
+      setIsLoading(false);
+      console.log(e);
+      setErrorMessage("Failed to log out.");
+    }
   };
 
   return (
@@ -424,7 +439,14 @@ const ProfileSettingsScreen = ({ navigation }) => {
                 title="Logout"
                 variant="secondary"
                 onPress={handleLogout}
+                isLoading={isLoading}
               />
+
+              {errorMessage && (
+                <Text className="text-red-600 text-m3-body-small font-bold text-center">
+                  {errorMessage}
+                </Text>
+              )}
             </>
           )}
         </View>

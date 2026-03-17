@@ -1,10 +1,13 @@
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
+import { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import Button from "../../components/Button";
 import TextInput from "../../components/TextInput";
 
+import { useLogin } from "../../hooks/useAuth";
+
 const OnboardingScreen = ({ navigation }) => {
+  const { mutate: login, isPending: isLoginPending, error: loginError } = useLogin();
   // ===== LLD ATTRIBUTES =====
   const [currentView, setCurrentView] = useState("login"); // 'login' | 'signup' | 'setup'
 
@@ -30,6 +33,13 @@ const OnboardingScreen = ({ navigation }) => {
   const isLogin = currentView === "login";
   const isSignup = currentView === "signup";
   const isSetup = currentView === "setup";
+
+  useEffect(() => {
+    if (isLoginPending) {
+      setIsLoading(true);
+    }
+    setIsLoading(false);
+  }, [isLoginPending]);
 
   // ===== UI HELPERS =====
   const Divider = () => (
@@ -59,70 +69,70 @@ const OnboardingScreen = ({ navigation }) => {
     setCurrentView(view);
   };
 
-const validateInputs = () => {
-  setErrorMessage("");
+  const validateInputs = () => {
+    setErrorMessage("");
 
-  const isInDevelopment = false; // change to bypass in development
-  if (isInDevelopment) {
+    const isInDevelopment = false; // change to bypass in development
+    if (isInDevelopment) {
+      return true;
+    }
+
+    if (isSignup || isSetup) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(emailInput)) {
+        setErrorMessage("Email is invalid");
+        return false;
+      }
+
+      if (!passwordInput || passwordInput.length < 8) {
+        const msg = "Password should be at least 8 characters long";
+        setErrorMessage(msg);
+        return false;
+      }
+    }
+
+    if (isSignup && passwordInput !== confirmPasswordInput) {
+      setErrorMessage("Passwords do not match");
+      return false;
+    }
+
+    if (isSignup && !acceptedPolicy) {
+      setErrorMessage("Please accept the Privacy Policy to continue");
+      return false;
+    }
+
+    if (isSetup) {
+      const age = parseInt(ageInput);
+      const height = parseInt(heightInput);
+      const weight = parseInt(weightInput);
+
+      if (isNaN(age) || age < 10 || age >= 100) {
+        setErrorMessage("Please enter a valid age (10-99)");
+        return false;
+      }
+      if (isNaN(height) || height < 50 || height > 250) {
+        setErrorMessage("Please enter a valid height (50-250 cm)");
+        return false;
+      }
+      if (isNaN(weight) || weight < 20 || weight > 200) {
+        setErrorMessage("Please enter a valid weight (20-200 kg)");
+        return false;
+      }
+    }
+
     return true;
-  }
-
-  if (isSignup || isSetup) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailInput)) {
-      setErrorMessage("Email is invalid");
-      Alert.alert("Invalid Input", "Email is invalid");
-      return false;
-    }
-
-    if (!passwordInput || passwordInput.length < 8) {
-      const msg = "Password should be at least 8 characters long";
-      setErrorMessage(msg);
-      Alert.alert("Weak Password", msg);
-      return false;
-    }
-  }
-
-  if (isSignup && passwordInput !== confirmPasswordInput) {
-    setErrorMessage("Passwords do not match");
-    return false;
-  }
-
-  if (isSignup && !acceptedPolicy) {
-    setErrorMessage("Please accept the Privacy Policy to continue");
-    return false;
-  }
-
-  if (isSetup) {
-    const age = parseInt(ageInput);
-    const height = parseInt(heightInput);
-    const weight = parseInt(weightInput);
-
-    if (isNaN(age) || age < 10 || age >= 100) {
-      setErrorMessage("Please enter a valid age (10-99)");
-      return false;
-    }
-    if (isNaN(height) || height < 50 || height > 250) {
-      setErrorMessage("Please enter a valid height (50-250 cm)");
-      return false;
-    }
-    if (isNaN(weight) || weight < 20 || weight > 200) {
-      setErrorMessage("Please enter a valid weight (20-200 kg)");
-      return false;
-    }
-  }
-
-  return true;
-};
+  };
 
   const registerDeviceWithBackend = async () => {
-    // leave empty for now
+    // TODO register on login?
   };
 
   const handleLogin = async () => {
     if (validateInputs()) {
-      // insert api calls
-      navigation.navigate("MainTabs");
+      login({
+        email: emailInput,
+        password: passwordInput,
+      });
     }
   };
 
@@ -139,6 +149,10 @@ const validateInputs = () => {
       navigation.navigate("MainTabs");
     }
   };
+
+  useEffect(() => {
+    console.log({loginError});
+  }, [loginError]);
 
   return (
     <View className="flex-1 bg-bbam-back-page">
@@ -196,11 +210,19 @@ const validateInputs = () => {
               </View>
 
               <View className="mt-6">
+                {loginError && (
+                  <View className="bg-red-50 p-4 rounded-2xl mt-4 mb-4 border border-red-100">
+                    <Text className="text-red-600 text-m3-body-small font-bold text-center">
+                      Invalid username or password
+                    </Text>
+                  </View>
+                )}
                 <Button
                   title="Login"
                   variant="primary"
                   onPress={handleLogin}
-                  className="rounded-[28px] py-5"
+                  className="py-5"
+                  isLoading={isLoading}
                 />
               </View>
 
@@ -294,12 +316,20 @@ const validateInputs = () => {
                 </Text>
               </TouchableOpacity>
 
+              {errorMessage && (
+                <View className="bg-red-50 p-4 rounded-2xl mt-6 -mb-2s border border-red-100">
+                  <Text className="text-red-600 text-m3-body-small font-bold text-center">
+                    {errorMessage}
+                  </Text>
+                </View>
+              )}
+
               <View className="mt-10">
                 <Button
                   title="Continue"
                   variant="primary"
                   onPress={handleSignup}
-                  className="rounded-[28px] py-5"
+                  className="py-5"
                   testID="signup-continue-button"
                 />
               </View>

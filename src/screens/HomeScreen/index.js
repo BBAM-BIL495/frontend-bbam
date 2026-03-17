@@ -1,18 +1,18 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import CardItem from '../../components/CardItem';
 import Button from '../../components/Button';
+import { useUser } from '../../hooks/useAuth';
 
 const HomeScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
+  const { data: userData } = useUser();
 
   // mock attributes and methods according to lld
-  const userProfile = {
-    username: 'bbamtest'
-  }
+  const [userProfile, setUserProfile] = useState({});
 
   const workoutPlans = [
     { id: '1', name: 'My Daily Workout', totalExercises: 5, estimatedDuration: 45 },
@@ -27,7 +27,9 @@ const HomeScreen = ({ navigation }) => {
   const totalTimeSpent = 5;
 
   const loadWorkoutPlans = () => {};
-  const loadUserProfile = () => {};
+  const loadUserProfile = () => {
+    setUserProfile(prev => ({ ...prev, username: userData.user_name }));
+  };
   const navigateToCreateWorkout = () => {
     navigation.navigate('WorkoutEdit', { editMode: false });
   };
@@ -36,6 +38,11 @@ const HomeScreen = ({ navigation }) => {
       workoutPlan: workout
     });
   };
+
+  useEffect(() => {
+    loadUserProfile();
+    loadWorkoutPlans();
+  }, []);
 
   return (
     <View className="flex-1 bg-bbam-back-page" style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
