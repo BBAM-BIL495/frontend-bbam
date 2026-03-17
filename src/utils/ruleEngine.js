@@ -23,7 +23,6 @@ export const evaluateForm = (landmarks, exerciseType) => {
     if (!p1 || !p2 || !p3) continue;
 
     const angle = calculateAngle(p1, p2, p3);
-    console.log(`Checking Rule ${rule.id}: Calculated Angle is ${angle}`);
     const isMinError = rule.minAngle !== undefined && angle < rule.minAngle;
     const isMaxError = rule.maxAngle !== undefined && angle > rule.maxAngle;
 
