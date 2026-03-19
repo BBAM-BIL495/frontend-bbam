@@ -15,7 +15,6 @@ const WorkoutEditScreen = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
 
   // LLD attributes
-  console.log(route.params);
   const { editMode, workout = {} } = route.params || {};
   const { id: planId } = workout;
   const [planName, setPlanName] = useState(editMode ? workout.name : "");
@@ -48,15 +47,15 @@ const WorkoutEditScreen = ({ route, navigation }) => {
     setSelectedExercises([...selectedExercises, newEntry]);
   };
 
-  const removeExercise = (instanceId) => {
+  const removeExercise = useCallback((instanceId) => {
     setSelectedExercises(prev => prev.filter(ex => ex.instanceId !== instanceId));
-  };
+  }, []);
 
   const reorderExercises = (newData) => {
     setSelectedExercises(newData);
   };
 
-  const duplicateExercise = (instanceId) => {
+  const duplicateExercise = useCallback((instanceId) => {
     const index = selectedExercises.findIndex(ex => ex.instanceId === instanceId);
     if (index === -1) return;
 
@@ -72,9 +71,9 @@ const WorkoutEditScreen = ({ route, navigation }) => {
       copy.splice(index + 1, 0, clonedItem);
       return copy;
     });
-  };
+  }, []);
 
-  const updateExerciseDetails = (instanceId, diff) => {
+  const updateExerciseDetails = useCallback((instanceId, diff) => {
     setSelectedExercises(prev => prev.map(ex => {
       if (ex.instanceId === instanceId) {
         const newValue = Math.max(1, parseInt(ex.value || 0) + diff);
@@ -85,7 +84,7 @@ const WorkoutEditScreen = ({ route, navigation }) => {
       }
       return ex;
     }));
-  };
+  }, []);
 
   const scheduleLocalNotification = async () => {
     if (!currentSchedule) return;
@@ -157,6 +156,7 @@ const WorkoutEditScreen = ({ route, navigation }) => {
   const renderItem = useCallback(({ item, drag, isActive }) => (
     <ScaleDecorator>
       <View
+        key={item.instanceId}
         style={{
           marginBottom: 8,
           //paddingHorizontal: 24,
@@ -175,7 +175,7 @@ const WorkoutEditScreen = ({ route, navigation }) => {
         />
       </View>
     </ScaleDecorator>
-  ), [duplicateExercise]);
+  ), [removeExercise, duplicateExercise, updateExerciseDetails]);
 
   return (
     <View className="flex-1 bg-bbam-back-page" style={{ paddingTop: insets.top }}>
@@ -207,7 +207,7 @@ const WorkoutEditScreen = ({ route, navigation }) => {
         </Text>
 
         <View className="max-h-64 mx-4 pb-4 border-b-[0.5px] border-[#D4D6DD]">
-          <ScrollView nestedScrollEnabled showsVerticalScrollIndicator>
+          <ScrollView showsVerticalScrollIndicator>
             <View className="gap-2">
               {availableExercises.map(ex => (
                 <CardItem
@@ -226,15 +226,23 @@ const WorkoutEditScreen = ({ route, navigation }) => {
         </Text>
 
         {/* Current Plan */}
-        <View className="flex-1">
+        <View className="flex-1 mx-4">
           <DraggableFlatList
             data={selectedExercises}
             onDragEnd={({ data }) => reorderExercises(data)}
             keyExtractor={item => item.instanceId}
             renderItem={renderItem}
-            contentContainerStyle={{ paddingBottom: 10, paddingHorizontal: 16, backgroundColor: '#F8FAFC' }}
+            contentContainerStyle={{ paddingBottom: 10, backgroundColor: '#F8FAFC' }}
             activationDistance={20}
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={true}
+            ListEmptyComponent={
+              <View className="flex-1 items-center justify-center py-8 bg-white/30 rounded-2xl border border-dashed border-bbam-text-light/30">
+                <Ionicons name="fitness-outline" size={48} color="#9DA3A9" className="mb-2" />
+                <Text className="text-m3-body-medium text-bbam-text-light text-center">
+                  Add an exercise to get started
+                </Text>
+              </View>
+            }
           />
         </View>
 
