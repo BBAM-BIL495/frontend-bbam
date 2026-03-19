@@ -181,3 +181,5 @@ app-example
 # generated native folders
 # /ios
 # /android
+
+bbam-firebase-secret.json

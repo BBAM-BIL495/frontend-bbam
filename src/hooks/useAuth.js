@@ -17,7 +17,6 @@ export const useUser = () => {
   });
 };
 
-// 2. The Login Action
 export const useLogin = () => {
   const queryClient = useQueryClient();
   
@@ -37,6 +36,36 @@ export const useLogin = () => {
       await SecureStore.setItemAsync('userEmail', data.email);
       
       // invalidate to trigger useUser
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+    },
+  });
+};
+
+export const useRegister = () => {
+  return useMutation({
+    mutationFn: async (userData) => {
+      const { data } = await api.post('/users/register/', userData);
+      return data;
+    }
+  });
+};
+
+export const useUpdateProfile = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ user_id, ...updatedFields }) => {
+      const userId = user_id || await SecureStore.getItemAsync('userId');
+      const { data } = await api.patch(`/users/profiles/${userId}/`, updatedFields);
+      return data;
+    },
+    onSuccess: (data) => {
+      // refresh the user cache so Home and ProfileSettings show the new data instantly
+      const previousData = queryClient.getQueryData(['user']);
+      queryClient.setQueryData(['user'], {
+        ...previousData,
+        ...data
+      });
       queryClient.invalidateQueries({ queryKey: ['user'] });
     },
   });

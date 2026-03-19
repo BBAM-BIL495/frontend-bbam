@@ -16,7 +16,7 @@ const Button = ({ title, onPress, variant = 'primary', className = '', isLoading
     >
       {isLoading ? (
         <View className='flex-1 items-center justify-center'>
-          <ActivityIndicator size="large" />
+          <ActivityIndicator size="small" color={isPrimary ? 'white' : '#585AD1'}/>
         </View>
       ) : (
         <Text className={`h-6 text-center text-m3-body-large font-bold ${isPrimary ? 'text-white' : 'text-bbam-indigo-main'}`}>

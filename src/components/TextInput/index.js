@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput as NativeInput, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const TextInput = ({ label, placeholder, isPassword, value, onChangeText }) => {
+const TextInput = ({ label, placeholder, isPassword, value, onChangeText, keyboardType = 'default' }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
@@ -19,6 +19,7 @@ const TextInput = ({ label, placeholder, isPassword, value, onChangeText }) => {
           cursorColor="#585AD1"
           selectionColor="#585AD1"
           underlineColorAndroid="transparent"
+          keyboardType={keyboardType}
         />
         {isPassword && (
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={10}>

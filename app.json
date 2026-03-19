@@ -18,6 +18,7 @@
     },
     "android": {
       "package": "com.bbam.bodybeyond",
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.CAMERA"
       ],

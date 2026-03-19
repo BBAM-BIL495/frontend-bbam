@@ -13,6 +13,8 @@ const Stack = createNativeStackNavigator();
 
 const RootNavigator = () => {
   const { data: user, isLoading } = useUser();
+  const isLoggedIn = user && user.user_name !== null && user.height_cm !== null && user.weight_kg !== null && user.age !== null && user.gender !== null;
+
 
   if (isLoading) {
     return (
@@ -24,7 +26,7 @@ const RootNavigator = () => {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!user ? (
+      {!isLoggedIn ? (
         <Stack.Screen name="Login" component={OnboardingScreen} options={{ gestureEnabled: false }} />
       ) : (
         <>
