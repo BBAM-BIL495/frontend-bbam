@@ -63,7 +63,6 @@
     "mode": "hold",
     "description": "Maintain a push-up position with your body in a straight line to build core stability.",
     "holdConfig": {
-      "targetSeconds": 60,
       "primaryJoints": [12, 24, 28] 
     },
     "rules": [
@@ -198,6 +197,40 @@
         "maxAngle": 190,
         "errorCondition": "angle < 160",
         "message": "Squeeze your glutes! Push your hips higher toward the ceiling."
+      }
+    ]
+  },
+  "Lateral-Raise": {
+    "mode": "reps",
+    "description": "Lift arms out to the sides until they are level with shoulders.",
+    "repConfig": {
+      "primaryJoints": [14, 12, 24],
+      "startThreshold": 20,
+      "midThreshold": 85,
+      "type": "ascending"
+    },
+    "rules": [
+      {
+        "id": "LR-01",
+        "name": "Arm Height",
+        "joints": [14, 12, 24],
+        "minAngle": 0,
+        "maxAngle": 100,
+        "message": "Don't lift too high! Stop at shoulder level."
+      }
+    ]
+  },
+  "Side-Plank": {
+    "mode": "hold",
+    "holdConfig": { "primaryJoints": [12, 24, 28] },
+    "rules": [
+      {
+        "id": "SPL-01",
+        "name": "Hip Alignment",
+        "joints": [12, 24, 28],
+        "minAngle": 170,
+        "maxAngle": 190,
+        "message": "Keep your hips high! Your body should be a straight diagonal."
       }
     ]
   }

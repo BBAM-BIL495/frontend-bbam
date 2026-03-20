@@ -67,6 +67,9 @@ const PoseDetectionScreen = ({ navigation, route }) => {
       <RNMediapipe
         style={{ flex: 1 }}
         onLandmark={handleLandmarks}
+        modelComplexity={2} // 0 lite 1 full 2 heavy
+        minDetectionConfidence={0.7}
+        minTrackingConfidence={0.7}
         face={false}
         leftArm={true}
         rightArm={true}

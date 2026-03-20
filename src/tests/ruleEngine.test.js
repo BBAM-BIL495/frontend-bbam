@@ -252,7 +252,6 @@ describe('Exercise Rule Engine - Comprehensive Logic Tests', () => {
   };
 
     const result = evaluateForm(mockLandmarks, 'Jumping-Jack');
-    console.log("JJ Angle:", calculateAngle(mockLandmarks[11], mockLandmarks[0], mockLandmarks[12]));
     expect(result.isCorrect).toBe(true);
   });
 
@@ -289,6 +288,27 @@ describe('Exercise Rule Engine - Comprehensive Logic Tests', () => {
     const result = evaluateForm(mockLandmarks, 'Glute-Bridge');
     expect(result.isCorrect).toBe(false);
     expect(result.errorType).toBe('GB-01');
+  });
+
+  test('Mirroring: Should use Left Side when Right Side visibility is low', () => {
+    const mockLandmarks = {
+      24: { x: 0, y: 0, visibility: 0.01 }, 26: { x: 0, y: 0, visibility: 0.01 }, 28: { x: 0, y: 0, visibility: 0.01 },
+      23: { x: 0, y: 0, visibility: 0.9 }, 25: { x: 0, y: 100, visibility: 0.9 }, 27: { x: 100, y: 100, visibility: 0.9 }
+    };
+
+    const result = evaluateForm(mockLandmarks, 'Squat');
+    expect(result.isCorrect).toBe(true);
+    expect(result.errorType).toBeNull();
+  });
+
+  test('Stability: Should prefer Right Side when both sides are equally visible', () => {
+    const mockLandmarks = {
+      24: { x: 0, y: 0, visibility: 1 }, 26: { x: 0, y: 100, visibility: 1 }, 28: { x: 100, y: 100, visibility: 1 },
+      23: { x: 0, y: 0, visibility: 1 }, 25: { x: 0, y: 100, visibility: 1 }, 27: { x: 500, y: 500, visibility: 1 }
+    };
+
+    const result = evaluateForm(mockLandmarks, 'Squat');
+    expect(result.isCorrect).toBe(true);
   });
 
 });
