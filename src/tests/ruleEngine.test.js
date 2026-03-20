@@ -168,3 +168,127 @@ describe('Dynamic Rule Testing', () => {
   });
 
 });
+
+describe('Exercise Rule Engine - Comprehensive Logic Tests', () => {
+
+  // --- SQUAT ---
+  // Jointler: [12, 24, 26, 28] -> 4 joint, 2 açı lazım: [Torso Açı, Diz Açı]
+  test('Squat: Correct form (Straight torso, deep knee bend)', () => {
+    const mockLandmarks = generateFullBodyMock([12, 24, 26, 28], [175, 80]);
+    const result = evaluateForm(mockLandmarks, 'Squat');
+    expect(result.isCorrect).toBe(true);
+  });
+
+  test('Squat: Incorrect form (S-01: Shallow depth)', () => {
+    const mockLandmarks = generateFullBodyMock([12, 24, 26, 28], [175, 120]);
+    const result = evaluateForm(mockLandmarks, 'Squat');
+    expect(result.isCorrect).toBe(false);
+    expect(result.errorType).toBe('S-01');
+  });
+
+  // --- PUSH-UP ---
+  // Jointler: [12, 14, 16, 24, 28] -> 5 joint, 3 açı: [Dirsek, Omuz-Kalça, Kalça-Diz]
+  test('Push-up: Correct form (Straight body, proper depth)', () => {
+    const mockLandmarks = generateFullBodyMock([14, 12, 24, 28], [80, 175]);
+    const result = evaluateForm(mockLandmarks, 'Push-up');
+    expect(result.isCorrect).toBe(true);
+  });
+
+  test('Push-up: Incorrect form (P-01: Sagging hips)', () => {
+    const mockLandmarks = generateFullBodyMock([14, 12, 24, 28], [80, 150]);
+    const result = evaluateForm(mockLandmarks, 'Push-up');
+    expect(result.isCorrect).toBe(false);
+    expect(result.errorType).toBe('P-01');
+  });
+
+  // --- PLANK ---
+  test('Plank: Correct form (Strong line)', () => {
+    const mockLandmarks = generateFullBodyMock([12, 24, 28], [178]); 
+    const result = evaluateForm(mockLandmarks, 'Plank');
+    expect(result.isCorrect).toBe(true);
+  });
+
+  test('Plank: Incorrect form (PL-01: High hips)', () => {
+    const mockLandmarks = generateFullBodyMock([12, 24, 28], [150]);
+    const result = evaluateForm(mockLandmarks, 'Plank');
+    expect(result.isCorrect).toBe(false);
+    expect(result.errorType).toBe('PL-01');
+  });
+
+  // --- BICEP-CURL ---
+  test('Bicep-Curl: Correct form (Full contraction)', () => {
+    const mockLandmarks = generateFullBodyMock([12, 14, 16], [45]);
+    const result = evaluateForm(mockLandmarks, 'Bicep-Curl');
+    expect(result.isCorrect).toBe(true);
+  });
+
+  test('Bicep-Curl: Incorrect form (BC-01: Locking elbows)', () => {
+    const mockLandmarks = generateFullBodyMock([12, 14, 16], [175]);
+    const result = evaluateForm(mockLandmarks, 'Bicep-Curl');
+    expect(result.isCorrect).toBe(false);
+    expect(result.errorType).toBe('BC-01');
+  });
+
+  // --- LUNGE ---
+  test('Lunge: Correct form (Upright torso, 90deg knee)', () => {
+    const mockLandmarks = generateFullBodyMock([12, 24, 26, 28], [170, 90]);
+    const result = evaluateForm(mockLandmarks, 'Lunge');
+    expect(result.isCorrect).toBe(true);
+  });
+
+  test('Lunge: Incorrect form (L-02: Leaning too far forward)', () => {
+    const mockLandmarks = generateFullBodyMock([12, 24, 26, 28], [130, 90]);
+    const result = evaluateForm(mockLandmarks, 'Lunge');
+    expect(result.isCorrect).toBe(false);
+    expect(result.errorType).toBe('L-02');
+  });
+
+  // --- JUMPING-JACK ---
+  test('Jumping-Jack: Correct form (Arms at the top)', () => {
+    const mockLandmarks = {
+    11: { x: 0.3, y: 0.4, visibility: 1 },
+    0:  { x: 0.5, y: 0.5, visibility: 1 },
+    12: { x: 0.7, y: 0.4, visibility: 1 }
+  };
+
+    const result = evaluateForm(mockLandmarks, 'Jumping-Jack');
+    console.log("JJ Angle:", calculateAngle(mockLandmarks[11], mockLandmarks[0], mockLandmarks[12]));
+    expect(result.isCorrect).toBe(true);
+  });
+
+  test('Jumping-Jack: Incorrect form (JJ-01: Low arms)', () => {
+    const mockLandmarks = generateFullBodyMock([11, 0, 12], [40]);
+    const result = evaluateForm(mockLandmarks, 'Jumping-Jack');
+    expect(result.isCorrect).toBe(false);
+    expect(result.errorType).toBe('JJ-01');
+  });
+
+  // --- SHOULDER-PRESS ---
+  test('Shoulder-Press: Correct form (High extension)', () => {
+    const mockLandmarks = generateFullBodyMock([12, 14, 16], [165]);
+    const result = evaluateForm(mockLandmarks, 'Shoulder-Press');
+    expect(result.isCorrect).toBe(true);
+  });
+
+  test('Shoulder-Press: Incorrect form (SP-01: Elbows too low)', () => {
+    const mockLandmarks = generateFullBodyMock([12, 14, 16], [50]);
+    const result = evaluateForm(mockLandmarks, 'Shoulder-Press');
+    expect(result.isCorrect).toBe(false);
+    expect(result.errorType).toBe('SP-01');
+  });
+
+  // --- GLUTE-BRIDGE ---
+  test('Glute-Bridge: Correct form (Full hip lockout)', () => {
+    const mockLandmarks = generateFullBodyMock([12, 24, 26], [175]);
+    const result = evaluateForm(mockLandmarks, 'Glute-Bridge');
+    expect(result.isCorrect).toBe(true);
+  });
+
+  test('Glute-Bridge: Incorrect form (GB-01: Low hips)', () => {
+    const mockLandmarks = generateFullBodyMock([12, 24, 26], [130]);
+    const result = evaluateForm(mockLandmarks, 'Glute-Bridge');
+    expect(result.isCorrect).toBe(false);
+    expect(result.errorType).toBe('GB-01');
+  });
+
+});
