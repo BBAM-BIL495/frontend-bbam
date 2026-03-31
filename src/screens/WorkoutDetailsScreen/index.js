@@ -8,6 +8,7 @@ import CardItem from '../../components/CardItem';
 import Button from '../../components/Button';
 import PressableAnimated from '../../components/PressableAnimated';
 import ReminderSection from '../../components/ReminderSection';
+import { createSession } from '../../services/trackingService';
 
 const WorkoutDetailsScreen = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
