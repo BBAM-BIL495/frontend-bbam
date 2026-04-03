@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
+import { useExerciseLibrary } from './useExerciseLibrary';
 import { evaluateForm } from '../utils/ruleEngine';
 import { calculateEMA, calculateAngle3D } from '../utils/poseMath';
 import { feedbackProvider } from '../utils/feedback';
-import exerciseRules from '../utils/rules.json';
 
-export const usePoseProcessor = (exerciseType) => {
+export const usePoseProcessor = (exerciseId) => {
   const [appState, setAppState] = useState('CALIBRATING'); // 'CALIBRATING' | 'WORKOUT'
   const [reps, setReps] = useState(0);
   const [seconds, setSeconds] = useState(0);
@@ -12,6 +12,24 @@ export const usePoseProcessor = (exerciseType) => {
   const [feedback, setFeedback] = useState("Stand in T-Pose to Start");
   const smoothedAnglesRef = useRef({});
   const timerRef = useRef(null);
+
+  const { data: exerciseLibrary } = useExerciseLibrary();
+
+  useEffect(() => {
+    // Reset all states when next exercise is triggered
+    setAppState('CALIBRATING');
+    setReps(0);
+    setSeconds(0);
+    setMotionState(0);
+    setFeedback("Stand in T-Pose to Start");
+
+    smoothedAnglesRef.current = {};
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, [exerciseId]);
 
   const checkTPose = (landmarks) => {
     if (!landmarks[11] || !landmarks[12]) return false;
@@ -33,8 +51,8 @@ export const usePoseProcessor = (exerciseType) => {
       return;
     }
 
-    const config = exerciseRules[exerciseType];
-    const evaluation = evaluateForm(landmarks, exerciseType);
+    const config = exerciseLibrary[exerciseId];
+    const evaluation = evaluateForm(landmarks, config);
     
     const primaryJoints = config.repConfig?.primaryJoints || config.holdConfig?.primaryJoints;
     const rawAngle = calculateAngle3D(
@@ -43,8 +61,8 @@ export const usePoseProcessor = (exerciseType) => {
       landmarks[primaryJoints[2]]
     );
     
-    const currentAngle = calculateEMA(rawAngle, smoothedAnglesRef.current[exerciseType]);
-    smoothedAnglesRef.current[exerciseType] = currentAngle;
+    const currentAngle = calculateEMA(rawAngle, smoothedAnglesRef.current[exerciseId]);
+    smoothedAnglesRef.current[exerciseId] = currentAngle;
 
     if (config.mode === 'reps') {
       if (evaluation.isCorrect) {
