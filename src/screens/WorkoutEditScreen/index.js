@@ -44,7 +44,7 @@ const WorkoutEditScreen = ({ route, navigation }) => {
 
   const loadExerciseLibrary = () => {
     if (library) {
-      setAvailableExercises(library);
+      setAvailableExercises(Object.values(library));
     }
   };
 

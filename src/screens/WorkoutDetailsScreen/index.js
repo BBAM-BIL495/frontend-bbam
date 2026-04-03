@@ -30,7 +30,9 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
   };
   const handleStartWorkout = () => {
     console.log('pressed Start Workout');
-    navigation.navigate('LiveSession');
+    navigation.navigate('LiveSession', { 
+      exerciseList: exerciseList 
+    });
   };
   const handleEditWorkout = () => {
     navigation.navigate('WorkoutEdit', { editMode: true, workout: { ...workoutPlan, exerciseList} });

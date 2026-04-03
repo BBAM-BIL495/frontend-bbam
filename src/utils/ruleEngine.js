@@ -9,9 +9,8 @@ const getSideIds = (ids, targetSide) => ids.map(id => {
   return id;
 });
 
-export const evaluateForm = (landmarks, exerciseType) => {
+export const evaluateForm = (landmarks, currentExercise) => {
   const feedback = { message: "Looking good!", isCorrect: true, errorType: null };
-  const currentExercise = exerciseRules[exerciseType];
   if (!currentExercise || !landmarks) return feedback;
 
   const config = currentExercise.repConfig || currentExercise.holdConfig;

@@ -5,12 +5,16 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import { mapMediaPipeToInternal } from '../../utils/poseMath';
 import { usePoseProcessor } from '../../hooks/usePoseProcessor';
-import exerciseRules from '../../utils/rules.json';
+import { useExerciseLibrary } from '../../hooks/useExerciseLibrary';
 
 const LiveSessionScreen = ({ navigation, route }) => {
-  const { exerciseType } = route.params || { exerciseType: 'Squat' }; 
+  const { exerciseList = [] } = route.params || {};
+  console.log({ exerciseList }); // [{id,mode,name,value(target reps/seconds)}]
   const [landmarks, setLandmarks] = useState(null);
-  const { reps, seconds, feedback, appState, processFrame } = usePoseProcessor(exerciseType);
+  const [currentExercise, setCurrentExercise] = useState(exerciseList[0] || {});
+  const { reps, seconds, feedback, appState, processFrame } = usePoseProcessor(currentExercise.id);
+  const { data: exerciseLibrary = {} } = useExerciseLibrary(); // same structure as rules.json but keys are ids
+  console.log({ exerciseLibrary });
   const handleLandmarks = (data) => {
     if (data && data.landmarks) {
       const internalLandmarks = mapMediaPipeToInternal(data.landmarks);
@@ -19,7 +23,7 @@ const LiveSessionScreen = ({ navigation, route }) => {
     }
   };
 
-  const currentConfig = exerciseRules[exerciseType];
+  const currentConfig = exerciseLibrary[currentExercise.id];
 
   return (
     <View className="flex-1 bg-black">
