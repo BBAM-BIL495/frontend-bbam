@@ -67,7 +67,7 @@ const CardItem = ({
             <Ionicons name='chevron-forward' size={20} color='#9DA3A9' />
           )}
           {variant === 'exerciseAdd' && (
-            <PressableAnimated onPress={onAdd} hitSlop={15} transform>
+            <PressableAnimated onPress={onAdd} hitSlop={15} transform testID="exercise-add-button">
               <Ionicons name='add' size={24} color="#585AD1" />
             </PressableAnimated>
           )}

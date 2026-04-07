@@ -224,6 +224,7 @@ const WorkoutEditScreen = ({ route, navigation }) => {
           //paddingHorizontal: 24,
           opacity: isActive ? 0.8 : 1
         }}
+        testID='selected-exercise-card'
       >
         <CardItem
           title={item.name}
@@ -311,6 +312,7 @@ const WorkoutEditScreen = ({ route, navigation }) => {
                 </Text>
               </View>
             }
+            testID='draggable-exercise-list'
           />
         </View>
 

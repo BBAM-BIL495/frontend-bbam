@@ -27,9 +27,12 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 
-jest.mock('react-native-uuid', () => ({
-  v4: jest.fn(() => 'mock-uuid-1234'),
-}));
+jest.mock('react-native-uuid', () => {
+  let counter = 0;
+  return {
+    v4: jest.fn(() => `mock-uuid-${counter++}`)
+  };
+});
 
 jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper', () => ({
   default: {

@@ -4,7 +4,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const PressableAnimated = ({ children, onPress = () => {}, onPressIn = () => {}, className, transform = false, fade = false, activeColor = 'white', baseColor = 'white', hitSlop, disabled, accessibilityRole }) => {
+const PressableAnimated = ({ children, onPress = () => {}, onPressIn = () => {}, className, transform = false, fade = false, activeColor = 'white', baseColor = 'white', hitSlop, disabled, accessibilityRole, testID }) => {
   const isPressed = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -27,6 +27,7 @@ const PressableAnimated = ({ children, onPress = () => {}, onPressIn = () => {},
       className={className}
       hitSlop={hitSlop}
       accessibilityRole={accessibilityRole}
+      testID={testID}
     >
       {children}
     </AnimatedPressable>
