@@ -14,7 +14,7 @@ describe('Performance Benchmarks (PT-01, PT-02 & PT-05)', () => {
     const startTime = performance.now();
     
     for (let i = 0; i < ITERATIONS; i++) {
-      evaluateForm(mockLandmarks, 'Squat');
+      evaluateForm(mockLandmarks, exerciseRules['Squat']);
     }
     const averageTime = (performance.now() - startTime) / ITERATIONS;
 
@@ -45,7 +45,7 @@ describe('Performance Benchmarks (PT-01, PT-02 & PT-05)', () => {
     const rawLandmarks = [{ x: 0.5, y: 0.5, visibility: 0.9 }];
     const startTime = performance.now();
     const internalLandmarks = mapMediaPipeToInternal(rawLandmarks);
-    const evaluation = evaluateForm(internalLandmarks, 'Squat');
+    const evaluation = evaluateForm(internalLandmarks, exerciseRules['Squat']);
     feedbackProvider.processFeedback(evaluation);
     
     const totalTime = performance.now() - startTime;
@@ -82,7 +82,7 @@ describe('Egzersiz Mantık ve Rep Sayacı Testleri', () => {
       28: { x: 0.5, y: 0.8, visibility: 1 }  // Ayak
     };
 
-    const evaluation = evaluateForm(brokenPlankLandmarks, 'Plank');
+    const evaluation = evaluateForm(brokenPlankLandmarks, exerciseRules['Plank']);
     
     // Artık açı 170'in altında kalacağı için isCorrect false dönecektir
     expect(evaluation.isCorrect).toBe(false);
