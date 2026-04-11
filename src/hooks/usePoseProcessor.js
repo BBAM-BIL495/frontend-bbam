@@ -43,6 +43,7 @@ export const usePoseProcessor = (exerciseId) => {
   const processFrame = (landmarks) => {
     if (!landmarks) return;
     if (appState === 'CALIBRATING') {
+      console.log({tpose: checkTPose(landmarks)});
       if (checkTPose(landmarks)) {
         setAppState('WORKOUT');
         setFeedback("Calibration Complete! Start.");

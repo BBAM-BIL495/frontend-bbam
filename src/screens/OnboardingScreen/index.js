@@ -281,7 +281,7 @@ const OnboardingScreen = ({ navigation }) => {
         <View className="px-6" style={{ paddingTop: isLogin ? 28 : 64 }}>
           {/* ===== LOGIN ===== */}
           {isLogin && (
-            <>
+            <View className="mx-1.5">
               <Text className="text-[34px] font-bold text-center mb-7 text-bbam-text-main">
                 Welcome!
               </Text>
@@ -334,23 +334,29 @@ const OnboardingScreen = ({ navigation }) => {
                 <Text className="text-bbam-text-light">
                   Don’t have an account?{" "}
                 </Text>
-                <TouchableOpacity onPress={() => switchView("signup")}>
+                <TouchableOpacity
+                  onPress={() => {
+                    switchView("signup");
+                    setErrorMessage({});
+                  }}
+                  hitSlop={15}
+                >
                   <Text className="font-bold text-bbam-indigo-main">
                     Sign up
                   </Text>
                 </TouchableOpacity>
               </View>
-            </>
+            </View>
           )}
 
           {/* ===== SIGNUP ===== */}
           {isSignup && (
-            <>
-              <Text className="text-[34px] font-bold text-center mb-12 text-bbam-text-main">
+            <View className="mx-1.5">
+              <Text className="text-m3-headline-large font-bold text-center mb-10 text-bbam-text-main">
                 Create an Account
               </Text>
 
-              <Text className="text-[18px] font-bold mb-2 text-bbam-text-main">
+              <Text className="text-m3-body-large font-bold mb-2 text-bbam-text-main">
                 Username
               </Text>
               <TextInput
@@ -362,7 +368,7 @@ const OnboardingScreen = ({ navigation }) => {
               />
 
               <View className="mt-6" />
-              <Text className="text-[18px] font-bold mb-2 text-bbam-text-main">
+              <Text className="text-m3-body-large font-bold mb-2 text-bbam-text-main">
                 Email Address
               </Text>
               <TextInput
@@ -374,7 +380,7 @@ const OnboardingScreen = ({ navigation }) => {
               />
 
               <View className="mt-6" />
-              <Text className="text-[18px] font-bold mb-2 text-bbam-text-main">
+              <Text className="text-m3-body-large font-bold mb-2 text-bbam-text-main">
                 Password
               </Text>
               <TextInput
@@ -385,7 +391,7 @@ const OnboardingScreen = ({ navigation }) => {
                 onChangeText={setPasswordInput}
               />
 
-              <View className="mt-4">
+              <View className="mt-2">
                 <TextInput
                   label=""
                   placeholder="Confirm password"
@@ -412,7 +418,7 @@ const OnboardingScreen = ({ navigation }) => {
                     <Text className="text-white text-lg font-bold">✓</Text>
                   )}
                 </View>
-                <Text className="ml-4 text-[16px] text-bbam-text-main">
+                <Text className="ml-4 text-m3-body-medium text-bbam-text-main">
                   By continuing, you agree to our{" "}
                   <Text className="text-bbam-indigo-main font-bold">
                     Privacy Policy
@@ -422,14 +428,14 @@ const OnboardingScreen = ({ navigation }) => {
               </TouchableOpacity>
 
               {(errorMessage.signup || errorMessage.common) && (
-                <View className="bg-red-50 p-4 rounded-2xl mt-6 -mb-2s border border-red-100">
+                <View className="bg-red-50 p-4 rounded-2xl mt-6 -mb-2 border border-red-100">
                   <Text className="text-red-600 text-m3-body-small font-bold text-center">
                     {errorMessage.signup || errorMessage.common}
                   </Text>
                 </View>
               )}
 
-              <View className="mt-10">
+              <View className="mt-8">
                 <Button
                   title="Continue"
                   variant="primary"
@@ -447,13 +453,19 @@ const OnboardingScreen = ({ navigation }) => {
                 <Text className="text-bbam-text-light">
                   Already have an account?{" "}
                 </Text>
-                <TouchableOpacity onPress={() => switchView("login")}>
+                <TouchableOpacity
+                  onPress={() => {
+                    switchView("login");
+                    setErrorMessage({});
+                  }}
+                  hitSlop={15}
+                >
                   <Text className="font-bold text-bbam-indigo-main">
                     Log in
                   </Text>
                 </TouchableOpacity>
               </View>
-            </>
+            </View>
           )}
 
           {/* ===== SETUP ===== */}

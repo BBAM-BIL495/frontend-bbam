@@ -18,8 +18,10 @@ const LiveSessionScreen = ({ navigation, route }) => {
   const { data: exerciseLibrary = {} } = useExerciseLibrary(); // same structure as rules.json but keys are ids
   //console.log({ exerciseLibrary });
   const handleLandmarks = (data) => {
-    if (data && data.landmarks) {
-      const internalLandmarks = mapMediaPipeToInternal(data.landmarks);
+    const parsedData = JSON.parse(data);
+    if (parsedData && parsedData.landmarks) {
+      const internalLandmarks = mapMediaPipeToInternal(parsedData.landmarks);
+      console.log({raw: parsedData.landmarks, internal: internalLandmarks});
       setLandmarks(internalLandmarks);
       processFrame(internalLandmarks);
     }

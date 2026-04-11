@@ -31,14 +31,14 @@ export const calculateAngle3D = (p1, p2, p3) => {
 export const mapMediaPipeToInternal = (rawLandmarks) => {
   if (!rawLandmarks || !Array.isArray(rawLandmarks)) return {};
 
-  return rawLandmarks.reduce((acc, landmark, index) => {
-    acc[index] = {
+  return rawLandmarks.map((landmark, index) => {
+    const res = {
       x: landmark.x,
       y: landmark.y,
       z: landmark.z || 0,
       visibility: landmark.visibility || landmark.presence || 0
     };
-    return acc;
+    return res;
   }, {});
 };
 
