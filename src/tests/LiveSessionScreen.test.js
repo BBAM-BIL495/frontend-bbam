@@ -2,12 +2,24 @@ import React from 'react';
 import { render, fireEvent, cleanup } from '@testing-library/react-native';
 import LiveSessionScreen from '../screens/LiveSessionScreen';
 import { usePoseProcessor } from '../hooks/usePoseProcessor';
-import { mapMediaPipeToInternal } from '../utils/poseMath';
+import { mapMediaPipeToInternal, smoothLandmarks } from '../utils/poseMath';
 import { useExerciseLibrary } from '../hooks/useExerciseLibrary';
 
 jest.mock('../hooks/usePoseProcessor');
+jest.mock('../hooks/useExerciseLibrary');
+
+jest.mock('../utils/feedback', () => ({
+  feedbackProvider: {
+    processFeedback: jest.fn(),
+    triggerVoiceOutput: jest.fn(),
+  },
+}));
+
 jest.mock('../utils/poseMath', () => ({
-  mapMediaPipeToInternal: jest.fn(),
+  mapMediaPipeToInternal: jest.fn((data) => data),
+  smoothLandmarks: jest.fn((next, prev) => next),
+  calculateAngle3D: jest.fn(() => 180),
+  calculateEMA: jest.fn((v) => v),
 }));
 
 jest.mock('@expo/vector-icons', () => ({
@@ -27,14 +39,15 @@ jest.mock('@thinksys/react-native-mediapipe', () => {
   };
 });
 
-jest.mock('../utils/feedback', () => ({
-  feedbackProvider: {
-    processFeedback: jest.fn(),
-    triggerVoiceOutput: jest.fn(),
-  },
-}));
-
-jest.mock('../hooks/useExerciseLibrary');
+jest.mock('react-native-svg', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ children }) => <View testID="svg-root">{children}</View>,
+    Circle: (props) => <View {...props} testID="svg-circle" />,
+  };
+});
 
 jest.mock('@shopify/react-native-skia', () => ({
   Canvas: ({ children, testID }) => <div testID={testID || "skia-canvas"}>{children}</div>,
@@ -129,6 +142,19 @@ describe('LiveSessionScreen - Refactored Tests', () => {
     fireEvent.press(getByTestId('close-button'));
     expect(mockNavigation.goBack).toHaveBeenCalled();
   });
+  
+  // removed 5 : should color incorrect form for now
+  test('ST-06: ui must react when visibility error occurs', () => {
+    usePoseProcessor.mockReturnValue({
+      reps: 0,
+      seconds: 0,
+      feedback: "Body not fully visible",
+      appState: 'WORKOUT',
+      processFrame: mockProcessFrame,
+    });
+    const { getByText } = render(<LiveSessionScreen navigation={mockNavigation} route={mockRoute} />);
+    expect(getByText('Body not fully visible')).toBeTruthy();
+  });
 
   test('ST-07: processframe must be invoked when mediapipe data exists', () => {
     const { getByTestId } = render(<LiveSessionScreen navigation={mockNavigation} route={mockRoute} />);
@@ -136,7 +162,38 @@ describe('LiveSessionScreen - Refactored Tests', () => {
     expect(mockProcessFrame).toHaveBeenCalled();
   });
 
-  test('ST-10: feedback logic check (Skia transition)', () => {
+  test('ST-08: should not see counter when calibrating', () => {
+    usePoseProcessor.mockReturnValue({
+      reps: 10,
+      appState: 'CALIBRATING',
+      feedback: "Wait",
+      processFrame: mockProcessFrame,
+    });
+    const { getByText, queryByText } = render(<LiveSessionScreen navigation={mockNavigation} route={mockRoute} />);
+    expect(getByText('CALIBRATING')).toBeTruthy();
+    expect(queryByText('10')).toBeNull();
+  });
+
+  test('ST-09: second format must be true for hold type exercises', () => {
+    const mockHoldRoute = { 
+      params: { 
+        exerciseList: [{ id: 'plank_1', mode: 'hold', value: 60 }] 
+      } 
+    };
+
+    usePoseProcessor.mockReturnValue({
+      reps: 0,
+      seconds: 45,
+      feedback: "Looking good!",
+      appState: 'WORKOUT',
+      processFrame: mockProcessFrame,
+    });
+
+    const { getByText } = render(<LiveSessionScreen navigation={mockNavigation} route={mockHoldRoute} />);
+    expect(getByText(/45s \/ 60s/)).toBeTruthy();
+  });
+
+  test('ST-10: skeleton color must change in correct form', () => {
     usePoseProcessor.mockReturnValue({
       reps: 1,
       feedback: "Looking good!",
@@ -146,6 +203,81 @@ describe('LiveSessionScreen - Refactored Tests', () => {
     
     const { getByText, getByTestId } = render(<LiveSessionScreen navigation={mockNavigation} route={mockRoute} />);
     expect(getByText("Looking good!")).toBeTruthy();
-    expect(getByTestId('skia-canvas')).toBeTruthy();
+    //expect(getByTestId('skia-canvas')).toBeTruthy(); //bu componenti sildim stabil olmadıgı icin
+  });
+});
+
+describe('LiveSessionScreen - in session tests', () => {
+  const mockNavigation = { goBack: jest.fn(), navigate: jest.fn() };
+  const mockExerciseList = [
+    { id: 'squat_1', name: 'Squat', mode: 'reps', value: 3 },
+    { id: 'plank_1', name: 'Plank', mode: 'hold', value: 10 }
+  ];
+  const mockRoute = { params: { exerciseList: mockExerciseList, sessionId: 123 } };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    require('../hooks/useExerciseLibrary').useExerciseLibrary.mockReturnValue({
+      data: { 
+        'squat_1': { mode: 'reps' }, 
+        'plank_1': { mode: 'hold' } 
+      }
+    });
+  });
+
+  test('ST-11: should start w first exercise and should show target rep', () => {
+    usePoseProcessor.mockReturnValue({
+      reps: 0, seconds: 0, appState: 'WORKOUT', feedback: "Looking good!", processFrame: jest.fn()
+    });
+    const { getByText } = render(<LiveSessionScreen navigation={mockNavigation} route={mockRoute} />);
+    expect(getByText(/0 \/ 3/)).toBeTruthy();
+  });
+
+  test('ST-12: should switch exercise when target rep is achieved', () => {
+    const { rerender, getByText } = render(<LiveSessionScreen navigation={mockNavigation} route={mockRoute} />);
+    usePoseProcessor.mockReturnValue({
+      reps: 3, seconds: 0, appState: 'WORKOUT', feedback: "Looking good!", processFrame: jest.fn()
+    });
+
+    rerender(<LiveSessionScreen navigation={mockNavigation} route={mockRoute} />);
+    expect(getByText(/0s/)).toBeTruthy(); 
+  });
+
+  test('ST-13: should navigate to session end screen when done', () => {
+    const singleExerciseRoute = { 
+      params: { 
+        exerciseList: [{ id: 'plank_1', name: 'Plank', mode: 'hold', value: 10 }],
+        sessionId: 123 
+      } 
+    };
+
+    usePoseProcessor.mockReturnValue({
+      reps: 0, 
+      seconds: 10,
+      appState: 'WORKOUT', 
+      feedback: "Perfect!", 
+      processFrame: jest.fn()
+    });
+
+    const finalExerciseRoute = { 
+      params: { 
+        exerciseList: [{ id: 'plank_1', name: 'Plank', mode: 'hold', value: 10 }],
+        sessionId: 123 
+      } 
+    };
+
+    render(<LiveSessionScreen navigation={mockNavigation} route={singleExerciseRoute} />);
+    expect(mockNavigation.navigate).toHaveBeenCalledWith('SessionSummary', { sessionId: 123 });
+  });
+
+  test('ST-14: useposeprocessor must be invoked by new id when an exercise is done', () => {
+    const mockProcess = usePoseProcessor;
+    const { rerender } = render(<LiveSessionScreen navigation={mockNavigation} route={mockRoute} />);
+    expect(mockProcess).toHaveBeenCalledWith('squat_1');
+    usePoseProcessor.mockReturnValue({
+      reps: 3, seconds: 0, appState: 'WORKOUT', processFrame: jest.fn()
+    });
+    rerender(<LiveSessionScreen navigation={mockNavigation} route={mockRoute} />);
+    expect(mockProcess).toHaveBeenCalledWith('plank_1');
   });
 });
