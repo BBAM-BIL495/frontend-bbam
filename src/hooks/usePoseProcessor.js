@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { useExerciseLibrary } from './useExerciseLibrary';
 import { evaluateForm } from '../utils/ruleEngine';
-import { calculateEMA, calculateAngle3D } from '../utils/poseMath';
+import { calculateEMA, calculateAngle3D, calculateAngle } from '../utils/poseMath';
 import { feedbackProvider } from '../utils/feedback';
+import { getSideIds } from '../utils/ruleEngine';
 
 export const usePoseProcessor = (exerciseId) => {
   const [appState, setAppState] = useState('CALIBRATING'); // 'CALIBRATING' | 'WORKOUT' | 'WAITING'
@@ -17,6 +18,7 @@ export const usePoseProcessor = (exerciseId) => {
   const tPoseFramesRef = useRef(0);
   const motionStateRef = useRef(0);
   const libRef = useRef(null);
+  const exerciseIdRef = useRef(exerciseId);
   const calibrationTriggeredRef = useRef(false);
   const countdownIntervalRef = useRef(null);
   const { data: exerciseLibrary = {}, isLoading: isLibLoading } = useExerciseLibrary();
@@ -67,6 +69,7 @@ export const usePoseProcessor = (exerciseId) => {
     setMotionState(0);
     motionStateRef.current = 0;
     smoothedAnglesRef.current = {};
+    exerciseIdRef.current = exerciseId;
 
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -81,8 +84,8 @@ export const usePoseProcessor = (exerciseId) => {
   const checkTPose = (landmarks) => {
     if (!landmarks[11] || !landmarks[12]) return false;
     
-    const leftArmAngle = calculateAngle3D(landmarks[11], landmarks[13], landmarks[15]);
-    const rightArmAngle = calculateAngle3D(landmarks[12], landmarks[14], landmarks[16]);
+    const leftArmAngle = calculateAngle(landmarks[11], landmarks[13], landmarks[15]);
+    const rightArmAngle = calculateAngle(landmarks[12], landmarks[14], landmarks[16]);
 
     const isLeftHorizontal = Math.abs(landmarks[11].y - landmarks[15].y) < 0.2;
     const isRightHorizontal = Math.abs(landmarks[12].y - landmarks[16].y) < 0.2;
@@ -104,6 +107,7 @@ export const usePoseProcessor = (exerciseId) => {
     if (!landmarks) return;
 
     const currentAppState = appStateRef.current;
+    const currentId = exerciseIdRef.current;
 
     if (!calibrationTriggeredRef.current && currentAppState === 'CALIBRATING') {
       if (checkTPose(landmarks)) {
@@ -126,22 +130,35 @@ export const usePoseProcessor = (exerciseId) => {
     let evaluation = {};
     let currentAngle = 0;
     if (currentAppState === 'WORKOUT') {
-      const config = libRef.current?.[exerciseId];
+      const config = libRef.current?.[currentId];
       //console.log(config);
       evaluation = evaluateForm(landmarks, config);
       
       const primaryJoints = config.repConfig?.primaryJoints || config.holdConfig?.primaryJoints;
-      const rawAngle = calculateAngle3D(
-        landmarks[primaryJoints[0]],
-        landmarks[primaryJoints[1]],
-        landmarks[primaryJoints[2]]
+
+      const leftSideJoints = getSideIds(primaryJoints, 'left');
+      const rightSideJoints = getSideIds(primaryJoints, 'right');
+
+      // Calculate average visibility for both sides
+      const leftVis = leftSideJoints.reduce((acc, id) => acc + (landmarks[id]?.visibility || 0), 0) / leftSideJoints.length;
+      const rightVis = rightSideJoints.reduce((acc, id) => acc + (landmarks[id]?.visibility || 0), 0) / rightSideJoints.length;
+
+      // Choose the side with the highest visibility
+      const bestSide = rightVis >= leftVis ? 'right' : 'left';
+      const dynamicJoints = bestSide === 'right' ? rightSideJoints : leftSideJoints;
+      
+      const rawAngle = calculateAngle(
+        landmarks[dynamicJoints[0]],
+        landmarks[dynamicJoints[1]],
+        landmarks[dynamicJoints[2]]
       );
       
-      currentAngle = calculateEMA(rawAngle, smoothedAnglesRef.current[exerciseId]);
-      smoothedAnglesRef.current[exerciseId] = currentAngle;
+      currentAngle = calculateEMA(rawAngle, smoothedAnglesRef.current[currentId]);
+      smoothedAnglesRef.current[currentId] = currentAngle;
       //console.log(`Angle: ${currentAngle} | State: ${motionStateRef.current} | Start: ${config.repConfig.startThreshold}`);
       // bicep curl 160 ama 145 olmalı, json&db degisecek
       if (config.mode === 'reps') {
+        console.log(`[DEBUG] Angle: ${currentAngle.toFixed(1)} | State: ${motionStateRef.current} | StartThreshold: ${config.repConfig.startThreshold} | Target: ${config.repConfig.midThreshold}`);
         if (evaluation.isCorrect) {
           const currentState = motionStateRef.current;
           if (currentState === 0 && currentAngle > config.repConfig.startThreshold) {
@@ -173,8 +190,8 @@ export const usePoseProcessor = (exerciseId) => {
             landmarks[primaryJoints[1]], 
             landmarks[primaryJoints[2]]
           );
-          currentAngle = calculateEMA(rawAngle, smoothedAnglesRef.current[exerciseId]);
-          smoothedAnglesRef.current[exerciseId] = currentAngle;
+          currentAngle = calculateEMA(rawAngle, smoothedAnglesRef.current[currentId]);
+          smoothedAnglesRef.current[currentId] = currentAngle;
         }
 
         if (Math.random() < 0.05) {

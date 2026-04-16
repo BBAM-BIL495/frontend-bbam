@@ -1,7 +1,7 @@
 import { calculateAngle, calculateAngle3D } from './poseMath';
 import exerciseRules from './rules.json';
 
-const getSideIds = (ids, targetSide) => ids.map(id => {
+export const getSideIds = (ids, targetSide) => ids.map(id => {
   if (id === 0) return 0;
   const isCurrentlyLeft = id % 2 !== 0;
   if (targetSide === 'left') return isCurrentlyLeft ? id : id - 1;
@@ -12,6 +12,24 @@ const getSideIds = (ids, targetSide) => ids.map(id => {
 export const evaluateForm = (landmarks, currentExercise) => {
   const feedback = { message: "Looking good!", isCorrect: true, errorType: null };
   if (!currentExercise || !landmarks) return feedback;
+
+  if (currentExercise.requireHorizontal) {
+    const shoulder = landmarks[bestSide === 'right' ? 12 : 11];
+    const ankle = landmarks[bestSide === 'right' ? 28 : 27];
+
+    if (shoulder && ankle) {
+      const dy = Math.abs(shoulder.y - ankle.y);
+      const dx = Math.abs(shoulder.x - ankle.x);
+      
+      if (dy > dx * 0.8) { 
+        return { 
+          message: "Please get into a horizontal position on the floor.", 
+          isCorrect: false, 
+          errorType: 'ORIENTATION_ERROR' 
+        };
+      }
+    }
+  }
 
   const config = currentExercise.repConfig || currentExercise.holdConfig;
   const criticalJoints = config.primaryJoints;
