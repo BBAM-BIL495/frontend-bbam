@@ -169,7 +169,7 @@ export const usePoseProcessor = (exerciseId, screenAspectRatio) => {
       
       currentAngle = calculateEMA(rawAngle, smoothedAnglesRef.current[currentId]);
       smoothedAnglesRef.current[currentId] = currentAngle;
-      //console.log(`Angle: ${currentAngle} | State: ${motionStateRef.current} | Start: ${config.repConfig.startThreshold}`);
+      console.log(`Angle: ${currentAngle} | State: ${motionStateRef.current} | Start: ${config.repConfig.startThreshold}`);
       // bicep curl 160 ama 145 olmalı, json&db degisecek
       if (config.mode === 'reps') {
         const isClosing = config.repConfig.startThreshold > config.repConfig.midThreshold;

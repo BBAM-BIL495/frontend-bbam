@@ -45,8 +45,8 @@ const LiveSessionScreen = ({ navigation, route }) => {
     const parsedData = JSON.parse(data);
     if (parsedData?.landmarks) {
       const internalLandmarks = mapMediaPipeToInternal(parsedData.landmarks);
-      const smoothed = smoothLandmarks(internalLandmarks, landmarksSV.value, 0.2);
-      landmarksSV.value = internalLandmarks;
+      const smoothed = smoothLandmarks(internalLandmarks, landmarksSV.value, 0.3);
+      landmarksSV.value = smoothed;
       processFrame(internalLandmarks);
     }
   };
@@ -75,6 +75,7 @@ const LiveSessionScreen = ({ navigation, route }) => {
 
   const handleNextExercise = () => {
     if (currentIndex < exerciseList.length - 1) {
+      setIsTransitioning(true);
       setCurrentIndex(prev => prev + 1);
       feedbackProvider.triggerVoiceOutput("Exercise complete! Get ready for the next one.");
     } else {
@@ -82,16 +83,25 @@ const LiveSessionScreen = ({ navigation, route }) => {
     }
   };
 
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
   const handleExitWorkout = async () => {
     await deleteSession(sessionId);
     navigation.goBack();
   };
 
   useEffect(() => {
+    if (isTransitioning) {
+      if (reps === 0 && seconds === 0) {
+        setIsTransitioning(false);
+      }
+      return; 
+    }
+
     const targetValue = currentExercise.value || 0;
     const isFinished = currentExercise.mode === 'reps' ? reps >= targetValue : seconds >= targetValue;
-    if (isFinished && targetValue > 0) handleNextExercise();
-  }, [reps, seconds, currentIndex]);
+    if (appState === 'WORKOUT' && isFinished && targetValue > 0) handleNextExercise();
+  }, [reps, seconds, currentIndex, isTransitioning, appState, currentExercise.mode, currentExercise.value]);
 
   const currentConfig = exerciseLibrary[currentExercise.id];
 
@@ -123,7 +133,15 @@ const LiveSessionScreen = ({ navigation, route }) => {
           <Ionicons name="camera-reverse-outline" size={28} color="white"></Ionicons>
         </TouchableOpacity>
       </View>
-      
+
+      <View className="absolute top-12 right-6 z-50" style={{ zIndex: 999, elevation: 10 }}>
+        <TouchableOpacity 
+          onPress={handleNextExercise} 
+          className="bg-red-600 px-4 py-3 rounded-full">
+          <Text className="text-white font-bold">Skip (Debug)</Text>
+        </TouchableOpacity>
+      </View>
+
       <View className="absolute bottom-20 self-center bg-bbam-indigo-main/80 px-6 py-4 rounded-3xl w-full">
         <Text className="text-white font-bold text-center text-m3-headline-small">
           {appState === 'CALIBRATING' ? "CALIBRATING" :
