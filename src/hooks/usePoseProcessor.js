@@ -138,16 +138,8 @@ export const usePoseProcessor = (exerciseId, currentIndex, screenAspectRatio) =>
 
     if (highConfidencePoints < 10 && currentAppState === 'WORKOUT') {
       setFeedback("Body not visible - Paused");
-      
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-
-      if (motionStateRef.current !== 0) {
-        motionStateRef.current = 0;
-        setMotionState(0);
-      }
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      if (motionStateRef.current !== 0) { motionStateRef.current = 0; setMotionState(0); }
       return;
     }
 
@@ -169,121 +161,61 @@ export const usePoseProcessor = (exerciseId, currentIndex, screenAspectRatio) =>
     let evaluation = {};
     let currentAngle = 0;
     if (currentAppState === 'WORKOUT') {
-      //console.log(config);
-      if (!config || (!config.repConfig && !config.holdConfig)) {
-        console.debug("config not found");
-      }
-      let evaluation = evaluateForm(landmarks, config, aspectRatio);
-      
-      const primaryJoints = config?.repConfig?.primaryJoints || config?.holdConfig?.primaryJoints; if (!primaryJoints) return;
+      const primaryJoints = config?.repConfig?.primaryJoints || config?.holdConfig?.primaryJoints;
+      if (!primaryJoints) return;
+      const getSideData = (side) => {
+        const joints = getSideIds(primaryJoints, side);
+        const angle = calculateAngle(landmarks[joints[0]], landmarks[joints[1]], landmarks[joints[2]], aspectRatio);
+        const ev = evaluateForm(landmarks, config, aspectRatio, side);
+        const vis = joints.reduce((acc, id) => acc + (landmarks[id]?.visibility || 0), 0) / joints.length;
+        return { angle, evaluation: ev, visibility: vis };
+      };
 
-      const leftSideJoints = getSideIds(primaryJoints, 'left');
-      const rightSideJoints = getSideIds(primaryJoints, 'right');
+      const left = getSideData('left');
+      const right = getSideData('right');
 
-      const leftVis = leftSideJoints.reduce((acc, id) => acc + (landmarks[id]?.visibility || 0), 0) / leftSideJoints.length;
-      const rightVis = rightSideJoints.reduce((acc, id) => acc + (landmarks[id]?.visibility || 0), 0) / rightSideJoints.length;
-      const bestSide = rightVis >= leftVis ? 'right' : 'left';
-      if (Math.max(leftVis, rightVis) < 0.5) { 
-        return { 
-          evaluation: {
-            message: "Body not fully visible", 
-            isCorrect: false, 
-            errorType: 'VISIBILITY' 
-          },
-          currentAngle: 0
-        };
+      let bestData = (right.visibility >= left.visibility) ? right : left;
+
+      if (!bestData.evaluation.isCorrect && (left.evaluation.isCorrect || right.evaluation.isCorrect)) {
+          bestData = left.evaluation.isCorrect ? left : right;
+      } 
+      else if (left.evaluation.isCorrect && right.evaluation.isCorrect) {
+          bestData = left.angle < right.angle ? left : right;
       }
-      const dynamicJoints = bestSide === 'right' ? rightSideJoints : leftSideJoints;
-      
-      const rawAngle = calculateAngle(
-        landmarks[dynamicJoints[0]],
-        landmarks[dynamicJoints[1]],
-        landmarks[dynamicJoints[2]],
-        aspectRatio
-      );
-      
-      currentAngle = calculateEMA(rawAngle, smoothedAnglesRef.current[currentId]);
+
+      evaluation = bestData.evaluation;
+      currentAngle = calculateEMA(bestData.angle, smoothedAnglesRef.current[currentId]);
       smoothedAnglesRef.current[currentId] = currentAngle;
       
       console.log(`[DEBUG] EX: ${config?.name || currentId} | Açı: ${currentAngle}° | State: ${motionStateRef.current} | Mode: ${config?.mode}`);
       if (config.mode === 'reps') {
-        //console.log(`Angle: ${currentAngle} | State: ${motionStateRef.current} | Start: ${config.repConfig.startThreshold}`);
         const isClosing = config.repConfig.startThreshold > config.repConfig.midThreshold;
         
         if (evaluation.isCorrect) {
           const currentState = motionStateRef.current;
-          const atStart = isClosing ? 
-            currentAngle > config.repConfig.startThreshold : 
-            currentAngle < config.repConfig.startThreshold;
-          
-          const atMid = isClosing ? 
-            currentAngle < config.repConfig.midThreshold : 
-            currentAngle > config.repConfig.midThreshold;
+          const atStart = isClosing ? currentAngle > config.repConfig.startThreshold : currentAngle < config.repConfig.startThreshold;
+          const atMid = isClosing ? currentAngle < config.repConfig.midThreshold : currentAngle > config.repConfig.midThreshold;
           
           if (currentState === 0 && atStart) {
-            motionStateRef.current = 1;
-            setMotionState(1);
-          } 
-          else if (currentState === 1 && atMid) {
-            motionStateRef.current = 2;
-            setMotionState(2);
-          } 
-          else if (currentState === 2 && atStart) {
+            motionStateRef.current = 1; setMotionState(1);
+          } else if (currentState === 1 && atMid) {
+            motionStateRef.current = 2; setMotionState(2);
+          } else if (currentState === 2 && atStart) {
             setReps(prev => {
               const newCount = prev + 1;
               feedbackProvider.triggerVoiceOutput(`${newCount}`);
               return newCount;
             });
-            motionStateRef.current = 1;
-            setMotionState(1);
+            motionStateRef.current = 1; setMotionState(1);
           }
-        } /*else {
-          if (motionStateRef.current !== 0) {
-            console.log("[DEBUG]: lost form");
-            motionStateRef.current = 0;
-            setMotionState(0);
-          }
-        }*/ //revise squat
-      }
-      else if (config.mode === 'hold') {
-        const primaryJoints = config.holdConfig?.primaryJoints;
-        if (primaryJoints) {
-          const leftSide = getSideIds(primaryJoints, 'left');
-          const rightSide = getSideIds(primaryJoints, 'right');
-          
-          const leftVis = leftSide.reduce((acc, id) => acc + (landmarks[id]?.visibility || 0), 0) / leftSide.length;
-          const rightVis = rightSide.reduce((acc, id) => acc + (landmarks[id]?.visibility || 0), 0) / rightSide.length;
-          
-          const dynamicJoints = rightVis >= leftVis ? rightSide : leftSide;
-          
-          const rawAngle = calculateAngle(
-            landmarks[dynamicJoints[0]], 
-            landmarks[dynamicJoints[1]], 
-            landmarks[dynamicJoints[2]],
-            aspectRatio
-          );
-          currentAngle = calculateEMA(rawAngle, smoothedAnglesRef.current[currentId]);
-          smoothedAnglesRef.current[currentId] = currentAngle;
         }
-
-        if (Math.random() < 0.05) {
-          console.log(`[HOLD DEBUG] 
-            Angle: ${currentAngle} 
-            Correct: ${evaluation.isCorrect} 
-            Error: ${evaluation.message} 
-            Timer Active: ${!!timerRef.current}`);
-        }
-
+      } else if (config.mode === 'hold') {
         if (evaluation.isCorrect) {
           if (!timerRef.current) {
-            console.log("Hold started: Form is correct.");
-            timerRef.current = setInterval(() => {
-              setSeconds(prev => prev + 1);
-            }, 1000);
+            timerRef.current = setInterval(() => { setSeconds(prev => prev + 1); }, 1000);
           }
         } else if (timerRef.current) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
+          clearInterval(timerRef.current); timerRef.current = null;
         }
       }
 

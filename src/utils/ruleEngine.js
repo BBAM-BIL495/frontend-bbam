@@ -9,7 +9,7 @@ export const getSideIds = (ids, targetSide) => ids.map(id => {
   return id;
 });
 
-export const evaluateForm = (landmarks, currentExercise, aspectRatio = 1) => {
+export const evaluateForm = (landmarks, currentExercise, aspectRatio = 1, forcedSide = null) => {
   const feedback = { message: "Looking good!", isCorrect: true, errorType: null };
   if (!currentExercise || !landmarks) return feedback;
 
@@ -20,11 +20,15 @@ export const evaluateForm = (landmarks, currentExercise, aspectRatio = 1) => {
     return feedback; 
   }
   const criticalJoints = config.primaryJoints;
-  const leftPrimary = getSideIds(criticalJoints, 'left');
-  const rightPrimary = getSideIds(criticalJoints, 'right');
-  const leftVis = leftPrimary.reduce((acc, id) => acc + (landmarks[id]?.visibility || 0), 0) / criticalJoints.length;
-  const rightVis = rightPrimary.reduce((acc, id) => acc + (landmarks[id]?.visibility || 0), 0) / criticalJoints.length;
-  const bestSide = rightVis >= leftVis ? 'right' : 'left';
+
+  let bestSide = forcedSide;
+  if (!bestSide) {
+    const leftPrimary = getSideIds(criticalJoints, 'left');
+    const rightPrimary = getSideIds(criticalJoints, 'right');
+    const leftVis = leftPrimary.reduce((acc, id) => acc + (landmarks[id]?.visibility || 0), 0) / criticalJoints.length;
+    const rightVis = rightPrimary.reduce((acc, id) => acc + (landmarks[id]?.visibility || 0), 0) / criticalJoints.length;
+    bestSide = rightVis >= leftVis ? 'right' : 'left';
+  }
 
   if (currentExercise.requireHorizontal) {
     const shoulder = landmarks[bestSide === 'right' ? 12 : 11];
@@ -44,9 +48,11 @@ export const evaluateForm = (landmarks, currentExercise, aspectRatio = 1) => {
     }
   }
 
-  if (Math.max(leftVis, rightVis) < 0.2 && Object.keys(landmarks).length > 5) return { message: "Body not fully visible", isCorrect: false, errorType: 'VISIBILITY' };
-  
-  //let errors = [];
+  const targetSideJoints = getSideIds(criticalJoints, bestSide);
+  const sideVis = targetSideJoints.reduce((acc, id) => acc + (landmarks[id]?.visibility || 0), 0) / criticalJoints.length;
+  if (sideVis < 0.2 && Object.keys(landmarks).length > 5) {
+    return { message: "Body not fully visible", isCorrect: false, errorType: 'VISIBILITY' };
+  }
   for (const rule of currentExercise.rules) {
     const hasLeft = rule.joints.some(id => id !== 0 && id % 2 !== 0);
     const hasRight = rule.joints.some(id => id !== 0 && id % 2 === 0);
@@ -59,32 +65,15 @@ export const evaluateForm = (landmarks, currentExercise, aspectRatio = 1) => {
     if (!p1 || !p2 || !p3) continue;
 
     const angle = calculateAngle(p1, p2, p3, aspectRatio);
-    const isMinError = rule.minAngle !== undefined && angle < (rule.minAngle-2);
-    const isMaxError = rule.maxAngle !== undefined && angle > (rule.maxAngle+2);
-    //Are you adjusting the seat really? That's been your fucking problem the whole time. The seat height. So now you have it, right?
+    const isMinError = rule.minAngle !== undefined && angle < (rule.minAngle - 2);
+    const isMaxError = rule.maxAngle !== undefined && angle > (rule.maxAngle + 2);
+
     if (isMinError || isMaxError) {
       feedback.message = rule.message;
       feedback.isCorrect = false;
       feedback.errorType = rule.id;
       break; 
     }
-
-    /* en oncelikli rule erroru kullaniciya vermemiz lazim
-      if (isMinError || isMaxError) {
-        errors.push({
-          id: rule.id,
-          priority: rule.priority || 5,
-          message: rule.message,
-          currentAngle: angle3D
-        });
-      }
-    }
-
-    if (errors.length > 0) {
-      const primaryError = errors.sort((a, b) => a.priority - b.priority)[0];
-      return { ...primaryError, isCorrect: false };
-    }
-    */
   }
 
   return feedback;
