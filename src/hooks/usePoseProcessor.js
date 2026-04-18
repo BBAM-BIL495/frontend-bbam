@@ -56,7 +56,8 @@ export const usePoseProcessor = (exerciseId, currentIndex, screenAspectRatio) =>
   useEffect(() => {
     if (exerciseLibrary) {
       libRef.current = exerciseLibrary;
-      console.log("Library synced");
+      console.log("Kütüphane senkronize edildi. Mevcut Anahtarlar:", Object.keys(exerciseLibrary));
+      console.log("Aranan Exercise ID:", exerciseId);
     }
   }, [exerciseLibrary]);
 
@@ -110,14 +111,28 @@ export const usePoseProcessor = (exerciseId, currentIndex, screenAspectRatio) =>
   };
 
   const processFrame = (landmarks, fallbackRatio = 1.7) => {
+    if (!landmarks || !libRef.current) return;
+    const currentId = exerciseIdRef.current;
+    let config = libRef.current[currentId] || libRef.current[String(currentId)];
+
+    if (!config && Array.isArray(libRef.current)) {
+        config = libRef.current.find(ex => ex.id == currentId || ex._id == currentId);
+    }
+
+    if (!config || (!config.repConfig && !config.holdConfig)) {
+        if (Math.random() < 0.05) {
+             console.warn(`Egzersiz bulunamadı! Aranan ID: ${currentId}`);
+        }
+        return; 
+    }
+    
     const aspectRatio = screenAspectRatio || fallbackRatio;
     //console.log(`EX: ${exerciseId} | Mode: ${config.mode} | Angle: ${currentAngle} | Correct: ${evaluation.isCorrect} | State: ${motionStateRef.current}`);
     //if(!exerciseLibrary) console.log({exerciseLibrary});
     if (!landmarks || appStateRef.current === 'FINISHED') return;
 
     const currentAppState = appStateRef.current;
-    const currentId = exerciseIdRef.current;
-    const config = libRef.current?.[currentId];
+    const currentName = libRef.current?.[currentId]?.name;
     const visibilityValues = Object.values(landmarks).map(l => l.visibility || 0);
     const highConfidencePoints = visibilityValues.filter(v => v > 0.6).length;
 
@@ -155,7 +170,10 @@ export const usePoseProcessor = (exerciseId, currentIndex, screenAspectRatio) =>
     let currentAngle = 0;
     if (currentAppState === 'WORKOUT') {
       //console.log(config);
-      let evaluation = evaluateForm(landmarks, config);
+      if (!config || (!config.repConfig && !config.holdConfig)) {
+        console.debug("config not found");
+      }
+      let evaluation = evaluateForm(landmarks, config, aspectRatio);
       
       const primaryJoints = config?.repConfig?.primaryJoints || config?.holdConfig?.primaryJoints; if (!primaryJoints) return;
 
@@ -186,7 +204,8 @@ export const usePoseProcessor = (exerciseId, currentIndex, screenAspectRatio) =>
       
       currentAngle = calculateEMA(rawAngle, smoothedAnglesRef.current[currentId]);
       smoothedAnglesRef.current[currentId] = currentAngle;
-      // bicep curl 160 ama 145 olmalı, json&db degisecek
+      
+      console.log(`[DEBUG] EX: ${config?.name || currentId} | Açı: ${currentAngle}° | State: ${motionStateRef.current} | Mode: ${config?.mode}`);
       if (config.mode === 'reps') {
         //console.log(`Angle: ${currentAngle} | State: ${motionStateRef.current} | Start: ${config.repConfig.startThreshold}`);
         const isClosing = config.repConfig.startThreshold > config.repConfig.midThreshold;
@@ -218,13 +237,13 @@ export const usePoseProcessor = (exerciseId, currentIndex, screenAspectRatio) =>
             motionStateRef.current = 1;
             setMotionState(1);
           }
-        } else {
+        } /*else {
           if (motionStateRef.current !== 0) {
             console.log("[DEBUG]: lost form");
             motionStateRef.current = 0;
             setMotionState(0);
           }
-        }
+        }*/ //revise squat
       }
       else if (config.mode === 'hold') {
         const primaryJoints = config.holdConfig?.primaryJoints;

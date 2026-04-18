@@ -9,11 +9,16 @@ export const getSideIds = (ids, targetSide) => ids.map(id => {
   return id;
 });
 
-export const evaluateForm = (landmarks, currentExercise) => {
+export const evaluateForm = (landmarks, currentExercise, aspectRatio = 1) => {
   const feedback = { message: "Looking good!", isCorrect: true, errorType: null };
   if (!currentExercise || !landmarks) return feedback;
 
   const config = currentExercise.repConfig || currentExercise.holdConfig;
+  
+  if (!config || !config.primaryJoints) {
+    console.debug("config not sent");
+    return feedback; 
+  }
   const criticalJoints = config.primaryJoints;
   const leftPrimary = getSideIds(criticalJoints, 'left');
   const rightPrimary = getSideIds(criticalJoints, 'right');
@@ -53,7 +58,7 @@ export const evaluateForm = (landmarks, currentExercise) => {
     const p3 = landmarks[jointsToUse[2]];
     if (!p1 || !p2 || !p3) continue;
 
-    const angle = calculateAngle(p1, p2, p3);
+    const angle = calculateAngle(p1, p2, p3, aspectRatio);
     const isMinError = rule.minAngle !== undefined && angle < (rule.minAngle-2);
     const isMaxError = rule.maxAngle !== undefined && angle > (rule.maxAngle+2);
     //Are you adjusting the seat really? That's been your fucking problem the whole time. The seat height. So now you have it, right?
