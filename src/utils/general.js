@@ -11,8 +11,9 @@ const calculateDuration = (list) => {
   if (list.length === 0) return 0;
 
   const secondsPerRep = 4;
+  const waitTime = 5;
 
-  const totalSeconds = list.reduce((acc, exercise) => {
+  let totalSeconds = list.reduce((acc, exercise) => {
     const value = Number(exercise.value) || 0;
     if (exercise.mode === 'hold') {
       return acc + value;
@@ -21,6 +22,8 @@ const calculateDuration = (list) => {
     }
     return acc;
   }, 0);
+
+  totalSeconds += waitTime * (list.length - 1);
 
   return Math.ceil(totalSeconds / 60);
 };

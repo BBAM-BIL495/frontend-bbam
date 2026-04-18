@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { RNMediapipe, switchCamera } from '@thinksys/react-native-mediapipe';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,29 +10,69 @@ import { usePoseProcessor } from '../../hooks/usePoseProcessor';
 import { useExerciseLibrary } from '../../hooks/useExerciseLibrary';
 import { feedbackProvider } from '../../utils/feedback';
 
+import { deleteSession, endSession } from '../../services/trackingService';
+
 const LiveSessionScreen = ({ navigation, route }) => {
-  const { exerciseList = [] } = route.params || {};
+  const { exerciseList = [], sessionId } = route.params || {};
   const [currentIndex, setCurrentIndex] = useState(0);
   const currentExercise = exerciseList[currentIndex] || {};
+  const exerciseId = currentExercise.id || currentExercise._id;
   
   const { width, height } = useWindowDimensions();
-  const { reps, seconds, feedback, appState, restCountdown, processFrame } = usePoseProcessor(currentExercise.id);
+  const aspectRatio = height / width;
+
+  const { reps, seconds, feedback, appState, restCountdown, processFrame, stopProcessor } = usePoseProcessor(exerciseId, currentIndex, aspectRatio);
   const { data: exerciseLibrary = {} } = useExerciseLibrary();
 
   const landmarksSV = useSharedValue({});
   const isCorrectSV = useSharedValue(true);
 
+  const statsRef = useRef({
+    startTime: new Date(),
+    completedExercises: [],
+    currentStats: {
+      totalFrames: 0,
+      correctFrames: 0,
+      errors: new Set()
+    }
+  });
+  const isSessionEndedRef = useRef(false);
+
   useEffect(() => {
     isCorrectSV.value = feedback === "Looking good!" || feedback === "Perfect!";
   }, [feedback]);
 
+  useEffect(() => {
+    if (exerciseList.length > 0) {
+      console.log("--- EXERCISE DATA DEBUG ---");
+      console.log("Full Object:", JSON.stringify(exerciseList[0], null, 2));
+      console.log("Keys available:", Object.keys(exerciseList[0]));
+    } else {
+      console.log("Exercise list is empty!");
+    }
+  }, [exerciseList]);
+
   const handleLandmarks = (data) => {
+    if (isSessionEndedRef.current) return;
+
     const parsedData = JSON.parse(data);
     if (parsedData?.landmarks) {
       const internalLandmarks = mapMediaPipeToInternal(parsedData.landmarks);
-      const smoothed = smoothLandmarks(internalLandmarks, landmarksSV.value, 0.2);
-      landmarksSV.value = internalLandmarks;
-      processFrame(internalLandmarks);
+      const smoothed = smoothLandmarks(internalLandmarks, landmarksSV.value, 0.3);
+      landmarksSV.value = smoothed;
+      const result = processFrame(internalLandmarks);
+
+      // collect stats for current exercise
+      if (appState === 'WORKOUT' && result?.evaluation) {
+        const { isCorrect, message, errorType } = result.evaluation;
+        
+        statsRef.current.currentStats.totalFrames += 1;
+        if (isCorrect) {
+          statsRef.current.currentStats.correctFrames += 1;
+        } else if (message && message !== "Looking good!" && message !== "Perfect!") {
+          statsRef.current.currentStats.errors.add(message);
+        }
+      }
     }
   };
 
@@ -58,20 +98,74 @@ const LiveSessionScreen = ({ navigation, route }) => {
     isCorrectSV.value ? "#00FF00" : "#FF0000"
   );
 
-  const handleNextExercise = () => {
-    if (currentIndex < exerciseList.length - 1) {
+  const handleNextExercise = async () => {
+    if (currentIndex >= exerciseList.length) return;
+
+    const isLastExercise = currentIndex === exerciseList.length - 1;
+
+    // create stats history
+    const currentStats = statsRef.current.currentStats;
+    const accuracy = currentStats.totalFrames > 0 
+      ? (currentStats.correctFrames / currentStats.totalFrames) * 100 
+      : 100;
+    
+    const exerciseResult = {
+      exercise_id: currentExercise.id,
+      accuracy_score: Math.round(accuracy),
+      ...(currentExercise.mode === 'reps' ? { completed_reps: reps } : { completed_seconds: seconds }),
+      step_order: currentIndex + 1,
+      common_errors: Array.from(currentStats.errors)
+    };
+    statsRef.current.completedExercises.push(exerciseResult);
+
+    // reset stats for next exercise
+    statsRef.current.currentStats = { totalFrames: 0, correctFrames: 0, errors: new Set() };
+
+    if (!isLastExercise) {
+      setIsTransitioning(true);
       setCurrentIndex(prev => prev + 1);
       feedbackProvider.triggerVoiceOutput("Exercise complete! Get ready for the next one.");
     } else {
-      navigation.navigate('SessionSummary', { sessionId: route.params.sessionId });
+      const endTime = new Date();
+      const durationMinutes = Math.max(1, Math.round((endTime - statsRef.current.startTime) / 60000));
+
+      const finalPayload = {
+        duration_minutes: durationMinutes,
+        exercises: statsRef.current.completedExercises
+      };
+
+      isSessionEndedRef.current = true; 
+      stopProcessor();
+
+      try {
+        console.log({ finalStats: finalPayload.exercises, duration: finalPayload.duration_minutes });
+        //await endSession(sessionId, finalPayload);
+      } catch (e) {
+        console.error("Failed to save session results:", e);
+      }
+      //navigation.navigate('SessionSummary', { sessionId });
     }
   };
 
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const handleExitWorkout = async () => {
+    await deleteSession(sessionId);
+    navigation.goBack();
+  };
+
   useEffect(() => {
+    if (isTransitioning) {
+      if (reps === 0 && seconds === 0) {
+        setIsTransitioning(false);
+      }
+      return; 
+    }
+
     const targetValue = currentExercise.value || 0;
     const isFinished = currentExercise.mode === 'reps' ? reps >= targetValue : seconds >= targetValue;
-    if (isFinished && targetValue > 0) handleNextExercise();
-  }, [reps, seconds, currentIndex]);
+    if (!isSessionEndedRef.current && appState === 'WORKOUT' && isFinished && targetValue > 0) handleNextExercise();
+  }, [reps, seconds, currentIndex, isTransitioning, appState, currentExercise.mode, currentExercise.value]);
 
   const currentConfig = exerciseLibrary[currentExercise.id];
 
@@ -96,14 +190,22 @@ const LiveSessionScreen = ({ navigation, route }) => {
       />
 
       <View className="absolute top-12 left-6">
-        <TouchableOpacity accessibilityLabel="close-button" testID="close-button" onPress={() => navigation.goBack()} className="bg-white/20 p-3 rounded-full">
+        <TouchableOpacity accessibilityLabel="close-button" testID="close-button" onPress={handleExitWorkout} className="bg-white/20 p-3 rounded-full">
           <Ionicons name="close" size={28} color="white" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => switchCamera()} className="bg-white/20 p-3 rounded-full">
           <Ionicons name="camera-reverse-outline" size={28} color="white"></Ionicons>
         </TouchableOpacity>
       </View>
-      
+
+      <View className="absolute top-12 right-6 z-50" style={{ zIndex: 999, elevation: 10 }}>
+        <TouchableOpacity 
+          onPress={handleNextExercise} 
+          className="bg-red-600 px-4 py-3 rounded-full">
+          <Text className="text-white font-bold">Skip (Debug)</Text>
+        </TouchableOpacity>
+      </View>
+
       <View className="absolute bottom-20 self-center bg-bbam-indigo-main/80 px-6 py-4 rounded-3xl w-full">
         <Text className="text-white font-bold text-center text-m3-headline-small">
           {appState === 'CALIBRATING' ? "CALIBRATING" :

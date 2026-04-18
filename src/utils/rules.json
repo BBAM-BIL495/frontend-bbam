@@ -61,6 +61,7 @@
   },
   "Plank": {
     "mode": "hold",
+    "requireHorizontal": true,
     "description": "Maintain a push-up position with your body in a straight line to build core stability.",
     "holdConfig": {
       "primaryJoints": [12, 24, 28] 
@@ -82,8 +83,8 @@
     "description": "Curl the weight toward your shoulder while keeping your upper arm stationary.",
     "repConfig": {
       "primaryJoints": [12, 14, 16],
-      "startThreshold": 160,
-      "midThreshold": 40,
+      "startThreshold": 130,
+      "midThreshold": 70,
       "type": "descending"
     },
     "rules": [
@@ -222,6 +223,7 @@
   },
   "Side-Plank": {
     "mode": "hold",
+    "requireHorizontal": true,
     "description": "Maintain a sided straight line to build core stability.",
     "holdConfig": { "primaryJoints": [12, 24, 28] },
     "rules": [

@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Notifications from "expo-notifications";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useQueryClient } from "@tanstack/react-query";
 import CardItem from "../../components/CardItem";
 import Button from "../../components/Button";
 import PressableAnimated from "../../components/PressableAnimated";
 import ReminderSection from "../../components/ReminderSection";
 import { createSession } from "../../services/trackingService";
+import api from "../../api";
 import {
   scheduleLocalNotification,
   saveReminderState,
@@ -21,13 +23,13 @@ import {
 
 const WorkoutDetailsScreen = ({ route, navigation }) => {
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
 
   const [exerciseList, setExerciseList] = useState(null);
   const [reminderTime, setReminderTime] = useState(new Date());
   const [reminderFrequency, setReminderFrequency] = useState("Daily");
-
   const [isLocalAlarmScheduled, setIsLocalAlarmScheduled] = useState(false);
-  const [reminderId, setReminderId] = useState(null); // tracks the backend reminder id
+  const [reminderId, setReminderId] = useState(null);
 
   const { mutateAsync: createReminder } = useCreateReminder();
   const { mutateAsync: deleteReminder } = useDeleteReminder();
@@ -47,10 +49,9 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
     });
   }, [planId]);
 
-  // Sync reminder state from backend when reminders list loads (overwrites local if stale)
+  // Sync reminder state from backend when reminders list loads
   useEffect(() => {
     if (!reminders) return;
-    // String() guards against int vs string mismatch across navigation serialization
     const existing = reminders.find(
       (r) => String(r.plan) === String(planId) && r.is_active,
     );
@@ -60,19 +61,18 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
     saveReminderState(planId, enabled);
 
     if (existing) {
-      // Restore the saved reminder time so the UI shows the correct scheduled time
-      const [hourStr, minuteStr] = existing.reminder_time.split(':');
+      const [hourStr, minuteStr] = existing.reminder_time.split(":");
       const restored = new Date();
       restored.setHours(parseInt(hourStr, 10), parseInt(minuteStr, 10), 0, 0);
       setReminderTime(restored);
-
-      const freqMap = { daily: 'Daily', weekly: 'Weekly', once: 'Once' };
-      setReminderFrequency(freqMap[existing.recurrence] || 'Daily');
+      const freqMap = { daily: "Daily", weekly: "Weekly", once: "Once" };
+      setReminderFrequency(freqMap[existing.recurrence] || "Daily");
     }
   }, [reminders, planId]);
 
-  const handleStartWorkout = () => {
-    navigation.navigate("LiveSession", { exerciseList });
+  const handleStartWorkout = async () => {
+    const { id: sessionId } = await createSession(planId, new Date());
+    navigation.navigate("LiveSession", { exerciseList, sessionId });
   };
 
   const handleEditWorkout = () => {
@@ -82,12 +82,35 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
     });
   };
 
+  const handleDeleteWorkout = () => {
+    Alert.alert(
+      "Delete Workout",
+      "Are you sure you want to delete this workout plan? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await api.delete(`/workout/plans/${planId}/`);
+              queryClient.invalidateQueries({ queryKey: ["workoutPlans"] });
+              navigation.goBack();
+            } catch (error) {
+              console.error(error);
+              Alert.alert("Error", "Failed to delete the workout plan.");
+            }
+          },
+        },
+      ],
+    );
+  };
+
   // Called by ReminderSection when the switch is toggled
   const handleToggle = async (value) => {
     setIsLocalAlarmScheduled(value);
     await saveReminderState(planId, value);
     if (!value) {
-      // user turned off reminder — delete from backend and cancel local notifications
       if (reminderId) {
         try {
           await deleteReminder(reminderId);
@@ -104,7 +127,6 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
   const handleScheduleConfirmed = async (scheduleData) => {
     if (!scheduleData) return;
 
-    // 1. local notification — always runs regardless of backend
     try {
       await Notifications.cancelAllScheduledNotificationsAsync();
       await scheduleLocalNotification(scheduleData, workoutPlan.name, planId);
@@ -113,7 +135,6 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
       console.log("[Reminder] local notification error:", e?.message);
     }
 
-    // 2. backend sync — best-effort, won't break local notification if it fails
     try {
       if (reminderId) {
         await deleteReminder(reminderId);
@@ -150,14 +171,25 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
             {workoutPlan.name}
           </Text>
 
-          <PressableAnimated
-            onPress={handleEditWorkout}
-            hitSlop={15}
-            transform
-            className="p-2 -mr-2"
-          >
-            <MaterialCommunityIcons name="pencil" size={30} color="#585AD1" />
-          </PressableAnimated>
+          <View className="flex-row items-center">
+            <PressableAnimated
+              onPress={handleDeleteWorkout}
+              hitSlop={15}
+              transform
+              className="p-2"
+            >
+              <Ionicons name="trash-outline" size={26} color="#ED3241" />
+            </PressableAnimated>
+
+            <PressableAnimated
+              onPress={handleEditWorkout}
+              hitSlop={15}
+              transform
+              className="p-2 -mr-2"
+            >
+              <MaterialCommunityIcons name="pencil" size={26} color="#585AD1" />
+            </PressableAnimated>
+          </View>
         </View>
 
         {/* Stats */}
@@ -180,9 +212,9 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
           contentContainerClassName="flex-col gap-2"
           contentContainerStyle={{ paddingBottom: 20 }}
         >
-          {exerciseList?.map((item) => (
+          {exerciseList?.map((item, index) => (
             <CardItem
-              key={item.id}
+              key={`${item.id}-${index}`}
               title={item.name}
               subtitle={`${item.value} ${item.mode === "reps" ? "Reps" : "Seconds"}`}
               variant="exerciseDisplay"
