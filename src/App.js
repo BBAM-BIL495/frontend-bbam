@@ -6,7 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useRef } from 'react';
 import RootNavigator from './navigation/RootNavigator';
-import { syncRemindersFromBackend, REMINDER_SYNC_TASK } from './utils/notifications';
+import { syncRemindersFromBackend, REMINDER_SYNC_TASK, BACKGROUND_NOTIFICATION_TASK } from './utils/notifications';
 import { useReminders } from './hooks/useReminders';
 import * as BackgroundTask from 'expo-background-task';
 import * as TaskManager from 'expo-task-manager';
@@ -64,6 +64,8 @@ export default function App() {
   const appState = useRef(AppState.currentState);
 
   useEffect(() => {
+    Notifications.registerTaskAsync(BACKGROUND_NOTIFICATION_TASK);
+
     // Register background fetch so syncRemindersFromBackend runs even when app is killed
     TaskManager.isTaskRegisteredAsync(REMINDER_SYNC_TASK).then((registered) => {
       if (!registered) {

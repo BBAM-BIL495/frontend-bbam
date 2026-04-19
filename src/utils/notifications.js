@@ -6,6 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../api";
 
 export const REMINDER_SYNC_TASK = "REMINDER_SYNC_BACKGROUND";
+export const BACKGROUND_NOTIFICATION_TASK = "BACKGROUND_NOTIFICATION_TASK";
 
 // Define the task at module level — must be defined before App registers it
 TaskManager.defineTask(REMINDER_SYNC_TASK, async () => {
@@ -14,6 +15,17 @@ TaskManager.defineTask(REMINDER_SYNC_TASK, async () => {
     return BackgroundTask.BackgroundTaskResult.Success;
   } catch {
     return BackgroundTask.BackgroundTaskResult.Failed;
+  }
+});
+
+TaskManager.defineTask(BACKGROUND_NOTIFICATION_TASK, async ({ data, error }) => {
+  if (error) return;
+  
+  const type = data?.notification?.request?.content?.data?.type;
+  
+  if (type === 'REMINDER_SYNC') {
+    console.log("[BG Task] Silent push received. Syncing...");
+    await syncRemindersFromBackend();
   }
 });
 
