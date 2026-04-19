@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import PressableAnimated from '../PressableAnimated';
+import { exerciseImgs } from '../../utils/exercises';
 
 const CardItem = ({ 
   title,
@@ -13,9 +14,12 @@ const CardItem = ({
   onCopy,
   onDrag,
   onUpdateCount,
-  exerciseCountType
+  exerciseCountType,
+  exerciseId
 }) => {
   const timerRef = useRef(null);
+
+  const imageSource = exerciseImgs[exerciseId];
 
   const handlePressIn = (direction) => {
     handlePressOut(); // clear any leaked timers before starting new ones
@@ -47,8 +51,17 @@ const CardItem = ({
     >
       {/* Left Image Placeholder */}
       {variant !== 'workoutDisplay' && (
-        <View className='bg-white p-4 items-center justify-center w-20 h-full'>
-          <Ionicons name='image' size={32} color='#585AD1' />
+        <View className='bg-white p-2 items-center justify-center w-20 h-full'>
+          {imageSource ? (
+            <Image 
+              source={imageSource} 
+              className="w-full h-full" 
+              resizeMode="contain" 
+            />
+          ) : (
+            // Fallback to icon if ID isn't found in map
+            <Ionicons name='image' size={32} color='#585AD1' />
+          )}
         </View>
       )}
 

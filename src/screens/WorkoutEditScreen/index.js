@@ -290,6 +290,7 @@ const WorkoutEditScreen = ({ route, navigation }) => {
             onUpdateCount={(diff) =>
               updateExerciseDetails(item.instanceId, diff)
             }
+            exerciseId={item.id}
           />
         </View>
       </ScaleDecorator>
@@ -348,6 +349,7 @@ const WorkoutEditScreen = ({ route, navigation }) => {
                     title={ex.name}
                     variant="exerciseAdd"
                     onAdd={() => addExercise(ex)}
+                    exerciseId={ex.id}
                   />
                 ))}
               </View>
