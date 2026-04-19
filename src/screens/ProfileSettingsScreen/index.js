@@ -1,23 +1,37 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { StatusBar } from 'expo-status-bar';
-import * as SecureStore from 'expo-secure-store';
-import * as Notifications from 'expo-notifications';
-import { useEffect, useMemo, useState } from 'react';
-import { View, Text, Switch, TouchableOpacity, ScrollView, Alert, AppState } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import Button from '../../components/Button';
-import TextInput from '../../components/TextInput';
-import { useUser, useUpdateProfile } from '../../hooks/useAuth';
-import { getInitials } from '../../utils/general';
-import { requestPermissionWithAlert } from '../../utils/notifications';
+import { useQueryClient } from "@tanstack/react-query";
+import { StatusBar } from "expo-status-bar";
+import * as SecureStore from "expo-secure-store";
+import * as Notifications from "expo-notifications";
+import { useEffect, useMemo, useState } from "react";
+import {
+  View,
+  Text,
+  Switch,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  AppState,
+  Modal,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import Button from "../../components/Button";
+import TextInput from "../../components/TextInput";
+import {
+  useUser,
+  useUpdateProfile,
+  useDeleteAccount,
+} from "../../hooks/useAuth";
+import api from "../../api";
+import { getInitials } from "../../utils/general";
+import { requestPermissionWithAlert } from "../../utils/notifications";
 
 const SectionTitle = ({ children }) => (
-  <Text className='text-m3-label-large font-bold text-bbam-text-main mb-3'>
+  <Text className="text-m3-label-large font-bold text-bbam-text-main mb-3">
     {children}
   </Text>
 );
 
-const Card = ({ children, className = '' }) => (
+const Card = ({ children, className = "" }) => (
   <View className={`bg-white rounded-3xl p-5 shadow-sm ${className}`}>
     {children}
   </View>
@@ -27,18 +41,18 @@ const RowItem = ({ icon, title, subtitle, right, onPress }) => (
   <TouchableOpacity
     activeOpacity={onPress ? 0.7 : 1}
     onPress={onPress}
-    className='flex-row items-center justify-between py-3'
+    className="flex-row items-center justify-between py-3"
   >
-    <View className='flex-row items-center flex-1 pr-3'>
-      <View className='w-10 h-10 rounded-2xl bg-bbam-back-card items-center justify-center mr-3'>
-        <Ionicons name={icon} size={20} color='#585AD1' />
+    <View className="flex-row items-center flex-1 pr-3">
+      <View className="w-10 h-10 rounded-2xl bg-bbam-back-card items-center justify-center mr-3">
+        <Ionicons name={icon} size={20} color="#585AD1" />
       </View>
-      <View className='flex-1'>
-        <Text className='text-m3-body-large font-bold text-bbam-text-main'>
+      <View className="flex-1">
+        <Text className="text-m3-body-large font-bold text-bbam-text-main">
           {title}
         </Text>
         {!!subtitle && (
-          <Text className='text-m3-body-small text-bbam-text-light mt-0.5'>
+          <Text className="text-m3-body-small text-bbam-text-light mt-0.5">
             {subtitle}
           </Text>
         )}
@@ -46,7 +60,7 @@ const RowItem = ({ icon, title, subtitle, right, onPress }) => (
     </View>
 
     {/* RIGHT SIDE: keep it vertically centered */}
-    <View className='items-center justify-center'>{right}</View>
+    <View className="items-center justify-center">{right}</View>
   </TouchableOpacity>
 );
 
@@ -65,9 +79,16 @@ const ProfileSettingsScreen = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState({});
 
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
   const queryClient = useQueryClient();
   const { data: userData } = useUser();
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
+  const { mutate: deleteAccount, isPending: isDeleting } = useDeleteAccount();
 
   useEffect(() => {
     loadProfile();
@@ -78,15 +99,15 @@ const ProfileSettingsScreen = ({ navigation }) => {
   const initials = useMemo(() => getInitials(userProfile), [userProfile]);
 
   const setNotificationPreference = async () => {
-    const preference = await SecureStore.getItemAsync('notif_preference');
-    setNotificationsEnabled(preference === 'enabled');
-  }
+    const preference = await SecureStore.getItemAsync("notif_preference");
+    setNotificationsEnabled(preference === "enabled");
+  };
 
   // ===== METHODS (keep LLD shape; stubs are ok) =====
   const loadProfile = async () => {
     try {
       setIsLoading(true);
-      const storedEmail = await SecureStore.getItemAsync('userEmail');
+      const storedEmail = await SecureStore.getItemAsync("userEmail");
 
       setUserProfile({
         user_name: userData.user_name,
@@ -94,7 +115,7 @@ const ProfileSettingsScreen = ({ navigation }) => {
         height_cm: userData.height_cm,
         weight_kg: userData.weight_kg,
         age: userData.age,
-        gender: userData.gender
+        gender: userData.gender,
       });
 
       setIsLoading(false);
@@ -134,7 +155,7 @@ const ProfileSettingsScreen = ({ navigation }) => {
       Alert.alert("Invalid Weight", "Please enter a valid weight (20-200 kg)");
       return false;
     }
-    if (!['male', 'female'].includes(genderInput)) {
+    if (!["male", "female"].includes(genderInput)) {
       Alert.alert("Invalid Gender", "Please select a gender.");
       return false;
     }
@@ -150,13 +171,13 @@ const ProfileSettingsScreen = ({ navigation }) => {
       weight_kg: Number(weightInput),
       age: Number(ageInput),
       gender: genderInput,
-    }
+    };
 
     updateProfile(updateData, {
       onSuccess: () => {
         setUserProfile((prev) => ({
           ...prev,
-          ...updateData
+          ...updateData,
         }));
         setEditMode(false);
         setHasUnsavedChanges(false);
@@ -165,7 +186,7 @@ const ProfileSettingsScreen = ({ navigation }) => {
       onError: (error) => {
         console.log(error);
         setErrorMessage({ edit: "Failed to update profile." });
-      }
+      },
     });
   };
 
@@ -184,39 +205,40 @@ const ProfileSettingsScreen = ({ navigation }) => {
     // TODO IMPORTANT - on notif cancel cases we run Notifications.cancelAllScheduledNotificationsAsync to cancel local notifs. when user enables notifs again, should we get reminders from backend and set local notifications again??
     setNotificationsEnabled(enabled);
     if (enabled) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      console.log({existingStatus});
-      
-      if (existingStatus === 'granted') {
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      console.log({ existingStatus });
+
+      if (existingStatus === "granted") {
         setNotificationsEnabled(true);
-        await SecureStore.setItemAsync('notif_preference', 'enabled');
+        await SecureStore.setItemAsync("notif_preference", "enabled");
         return;
       }
 
       // If not granted, try requesting first
-      const { status: requestStatus } = await Notifications.requestPermissionsAsync();
-      
-      if (requestStatus !== 'granted') {
+      const { status: requestStatus } =
+        await Notifications.requestPermissionsAsync();
+
+      if (requestStatus !== "granted") {
         // User has previously blocked notifications, send to settings
         const result = await requestPermissionWithAlert();
         if (result === true) {
           // User intends to turn off notifs (pressed on go to settings) but we dont know if they actually turned it on
           // The AppState listener will catch them when they come back.
-          await SecureStore.setItemAsync('notif_preference', 'enabled');
+          await SecureStore.setItemAsync("notif_preference", "enabled");
         } else {
           setNotificationsEnabled(false);
-          await SecureStore.setItemAsync('notif_preference', 'disabled');
+          await SecureStore.setItemAsync("notif_preference", "disabled");
           await Notifications.cancelAllScheduledNotificationsAsync();
         }
       } else {
         setNotificationsEnabled(true);
-        await SecureStore.setItemAsync('notif_preference', 'enabled');
+        await SecureStore.setItemAsync("notif_preference", "enabled");
       }
     } else {
-
       // Turning off is always immediate
       setNotificationsEnabled(false);
-      await SecureStore.setItemAsync('notif_preference', 'disabled');
+      await SecureStore.setItemAsync("notif_preference", "disabled");
       await Notifications.cancelAllScheduledNotificationsAsync();
     }
   };
@@ -224,23 +246,21 @@ const ProfileSettingsScreen = ({ navigation }) => {
   // helper method to sync system notification state with app's notification state
   const refreshNotificationState = async () => {
     const { status } = await Notifications.getPermissionsAsync();
-    const systemIsGranted = status === 'granted';
-    
-    const preference = await SecureStore.getItemAsync('notif_preference');
-    const userWantsNotifs = preference === 'enabled';
+    const systemIsGranted = status === "granted";
+
+    const preference = await SecureStore.getItemAsync("notif_preference");
+    const userWantsNotifs = preference === "enabled";
 
     if (!systemIsGranted && userWantsNotifs) {
       // user turned notifs off from system settings, but the app thinks it's on
       // sync the app to off as well
       setNotificationsEnabled(false);
-      await SecureStore.setItemAsync('notif_preference', 'disabled');
+      await SecureStore.setItemAsync("notif_preference", "disabled");
       await Notifications.cancelAllScheduledNotificationsAsync();
-    } 
-    else if (systemIsGranted && userWantsNotifs) {
+    } else if (systemIsGranted && userWantsNotifs) {
       // Case: Everything matches.
       setNotificationsEnabled(true);
-    }
-    else {
+    } else {
       // user turned notifs off in the app.
       // we can't programmatically turn off system notif settings so ignore that part
       // even if system notif settings is granted, we keep the UI switch off.
@@ -249,9 +269,9 @@ const ProfileSettingsScreen = ({ navigation }) => {
   };
 
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextAppState => {
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
       // if the app comes back from the background/settings to the foreground
-      if (nextAppState === 'active') {
+      if (nextAppState === "active") {
         refreshNotificationState();
       }
     });
@@ -261,18 +281,86 @@ const ProfileSettingsScreen = ({ navigation }) => {
     };
   }, []);
 
+  const handleChangePassword = async () => {
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert("Error", "New passwords do not match.");
+      return;
+    }
+    if (newPassword.length < 8) {
+      Alert.alert("Error", "New password must be at least 8 characters.");
+      return;
+    }
+    try {
+      setPasswordLoading(true);
+      await api.post("/users/change-password/", {
+        old_password: oldPassword,
+        new_password: newPassword,
+      });
+      setShowPasswordModal(false);
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      Alert.alert("Success", "Password changed successfully.");
+    } catch (e) {
+      console.log(
+        "[ChangePassword] error:",
+        JSON.stringify(e?.response?.data),
+        "status:",
+        e?.response?.status,
+      );
+      Alert.alert(
+        "Error",
+        e?.response?.data?.error || "Failed to change password.",
+      );
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "This will permanently delete your account and all your data. This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () =>
+            deleteAccount(undefined, {
+              onSuccess: async () => {
+                await Notifications.cancelAllScheduledNotificationsAsync();
+                await SecureStore.deleteItemAsync("userToken");
+                await SecureStore.deleteItemAsync("userId");
+                await SecureStore.deleteItemAsync("userEmail");
+                queryClient.setQueryData(["user"], null);
+                queryClient.clear();
+              },
+              onError: () =>
+                Alert.alert(
+                  "Error",
+                  "Failed to delete account. Please try again.",
+                ),
+            }),
+        },
+      ],
+    );
+  };
+
   const handleLogout = async () => {
     setErrorMessage({});
     try {
-      // TODO later:
-      // - cancel notifications (expo-notifications)
-
       setIsLoading(true);
-      await SecureStore.deleteItemAsync('userToken');
-      await SecureStore.deleteItemAsync('userId');
-      await SecureStore.deleteItemAsync('userEmail');
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      await SecureStore.deleteItemAsync("userToken");
+      await SecureStore.deleteItemAsync("userId");
+      await SecureStore.deleteItemAsync("userEmail");
       // force to login screen
-      queryClient.setQueryData(['user'], null);
+      queryClient.setQueryData(["user"], null);
       queryClient.clear();
       setIsLoading(false);
     } catch (e) {
@@ -475,7 +563,11 @@ const ProfileSettingsScreen = ({ navigation }) => {
                 </View>
 
                 <View className="mt-8">
-                  <Button title="Save Changes" onPress={handleSaveChanges} isLoading={isUpdating} />
+                  <Button
+                    title="Save Changes"
+                    onPress={handleSaveChanges}
+                    isLoading={isUpdating}
+                  />
                 </View>
                 <View className="mt-3">
                   <Button
@@ -526,15 +618,15 @@ const ProfileSettingsScreen = ({ navigation }) => {
                 <RowItem
                   icon="key-outline"
                   title="Change Password"
-                  subtitle="Placeholder"
+                  subtitle="Update your password"
                   right={
                     <Ionicons
                       name="chevron-forward"
-                      size={18}
+                      size={16}
                       color="#9DA3A9"
                     />
                   }
-                  onPress={() => {}}
+                  onPress={() => setShowPasswordModal(true)}
                 />
                 <View className="h-[1px] bg-bbam-back-card" />
                 <RowItem
@@ -565,10 +657,76 @@ const ProfileSettingsScreen = ({ navigation }) => {
                   {errorMessage.logout}
                 </Text>
               )}
+
+              <Button
+                title="Delete Account"
+                variant="secondary"
+                className="h-16 mt-3 border-red-500"
+                onPress={handleDeleteAccount}
+                isLoading={isDeleting}
+              />
             </>
           )}
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showPasswordModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPasswordModal(false)}
+      >
+        <View
+          className="flex-1 justify-center items-center"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <View className="bg-white rounded-3xl p-6 mx-6 w-full">
+            <Text className="text-m3-title-large font-bold text-bbam-text-main mb-4">
+              Change Password
+            </Text>
+            <View className="mb-4">
+              <TextInput
+                placeholder="Current Password"
+                isPassword
+                value={oldPassword}
+                onChangeText={setOldPassword}
+              />
+            </View>
+            <View className="mb-4">
+              <TextInput
+                placeholder="New Password"
+                isPassword
+                value={newPassword}
+                onChangeText={setNewPassword}
+              />
+            </View>
+            <View className="mb-8">
+              <TextInput
+                placeholder="Confirm New Password"
+                isPassword
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+              />
+            </View>
+            <Button
+              title="Change Password"
+              onPress={handleChangePassword}
+              isLoading={passwordLoading}
+            />
+            <Button
+              title="Cancel"
+              variant="secondary"
+              className="mt-3"
+              onPress={() => {
+                setShowPasswordModal(false);
+                setOldPassword("");
+                setNewPassword("");
+                setConfirmPassword("");
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
 
       <StatusBar style="auto" />
     </View>

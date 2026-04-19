@@ -76,3 +76,14 @@ export const useUpdateProfile = () => {
     },
   });
 };
+
+export const useDeleteAccount = () => {
+  return useMutation({
+    mutationFn: async () => {
+      const userId = await SecureStore.getItemAsync('userId');
+      console.log('[DeleteAccount] calling DELETE /users/profiles/' + userId + '/');
+      const response = await api.delete(`/users/profiles/${userId}/`);
+      console.log('[DeleteAccount] response status:', response.status);
+    },
+  });
+};

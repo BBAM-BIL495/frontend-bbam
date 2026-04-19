@@ -212,18 +212,10 @@ const OnboardingScreen = ({ navigation }) => {
 
   const handleSignup = async () => {
     if (!validateInputs()) return;
-
-    const alreadySeen = await AsyncStorage.getItem('disclaimer_seen');
-    if (alreadySeen !== '1') {
-      setShowDisclaimer(true);
-      return;
-    }
-
-    await doSignup();
+    setShowDisclaimer(true);
   };
 
   const handleDisclaimerAccept = async () => {
-    await AsyncStorage.setItem('disclaimer_seen', '1');
     setShowDisclaimer(false);
     await doSignup();
   };
