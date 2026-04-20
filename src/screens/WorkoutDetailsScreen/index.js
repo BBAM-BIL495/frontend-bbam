@@ -218,6 +218,8 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
               title={item.name}
               subtitle={`${item.value} ${item.mode === "reps" ? "Reps" : "Seconds"}`}
               variant="exerciseDisplay"
+              description={item.description}
+              gifUrl={item.gifUrl}
             />
           ))}
         </ScrollView>

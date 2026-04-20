@@ -31,11 +31,13 @@ const calculateDuration = (list) => {
 export const mapWorkoutsToInternalStructure = (workoutList) => {
   
   return workoutList.map(({ id, plan_name, items}) => {
-    const exercises = items.map(({ exercise: { id: exerciseId, name: exerciseName }, target_reps, target_seconds }) => ({
+    const exercises = items.map(({ exercise: { id: exerciseId, name: exerciseName, description, gif_url }, target_reps, target_seconds }) => ({
       id: exerciseId,
       name: exerciseName.replaceAll('-', ' '),
       mode: target_reps !== null ? 'reps' : 'hold',
-      value: target_reps !== null ? target_reps : target_seconds
+      value: target_reps !== null ? target_reps : target_seconds,
+      description,
+      gifUrl: gif_url
     }));
 
     const result = {

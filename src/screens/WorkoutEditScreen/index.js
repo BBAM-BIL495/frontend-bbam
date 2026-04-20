@@ -223,7 +223,6 @@ const WorkoutEditScreen = ({ route, navigation }) => {
         response = await api.post("/workout/plans/", payload);
       }
 
-      console.log({ resp: response.data });
       const newWorkoutData = mapWorkoutsToInternalStructure([response.data])[0];
       if (exercisesChanged && response.data.id !== planId) {
         setInitialExercises(newWorkoutData.exerciseList);
@@ -350,6 +349,8 @@ const WorkoutEditScreen = ({ route, navigation }) => {
                     variant="exerciseAdd"
                     onAdd={() => addExercise(ex)}
                     exerciseId={ex.id}
+                    description={ex.description}
+                    gifUrl={ex.gif_url}
                   />
                 ))}
               </View>
