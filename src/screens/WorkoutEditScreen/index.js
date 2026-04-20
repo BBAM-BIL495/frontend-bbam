@@ -14,7 +14,6 @@ import DraggableFlatList, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CommonActions } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Notifications from "expo-notifications";
 import { useQueryClient } from "@tanstack/react-query";
 
 import TextInput from "../../components/TextInput";
@@ -24,7 +23,6 @@ import ReminderSection from "../../components/ReminderSection";
 
 import { useExerciseLibrary } from "../../hooks/useExerciseLibrary";
 import { useCreateReminder } from "../../hooks/useReminders";
-import { scheduleLocalNotification } from "../../utils/notifications";
 import api from "../../api";
 
 import { mapWorkoutsToInternalStructure } from "../../utils/general";
@@ -126,42 +124,6 @@ const WorkoutEditScreen = ({ route, navigation }) => {
     );
   }, []);
 
-  const scheduleLocalNotification = async () => {
-    if (!currentSchedule) return;
-
-    await Notifications.cancelAllScheduledNotificationsAsync();
-
-    let trigger;
-    if (currentSchedule.frequency === "Daily") {
-      trigger = {
-        hour: currentSchedule.hour,
-        minute: currentSchedule.minute,
-        repeats: true,
-      };
-    } else if (currentSchedule.frequency === "Weekly") {
-      // expo-notifications uses 1 for Sunday, 7 for Saturday. UI uses 0 for Monday, 6 for Sunday
-      trigger = {
-        weekday: currentSchedule.day === 6 ? 1 : currentSchedule.day + 2,
-        hour: currentSchedule.hour,
-        minute: currentSchedule.minute,
-        repeats: true,
-      };
-    } else {
-      // One-time notification
-      const triggerDate = new Date(currentSchedule.date);
-      triggerDate.setHours(currentSchedule.hour, currentSchedule.minute, 0);
-      trigger = triggerDate;
-    }
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Workout Time! 🏋️‍♂️",
-        body: `Ready for ${workoutPlan.name}?`,
-        data: { planId: workoutPlan.id },
-      },
-      trigger,
-    });
-  };
-
   const hasExercisesChanged = () => {
     const currentFormat = selectedExercises.map(({ instanceId, ...rest }) => ({
       ...rest,
@@ -230,11 +192,6 @@ const WorkoutEditScreen = ({ route, navigation }) => {
 
       // schedule local notification first (always), then sync to backend (best-effort)
       if (isLocalAlarmScheduled && currentSchedule) {
-        try {
-          await scheduleLocalNotification(currentSchedule, newWorkoutData.name, newWorkoutData.id);
-        } catch (e) {
-          console.log('[Reminder] local notification error:', e?.message);
-        }
         try {
           await createReminder({ planId: newWorkoutData.id, schedule: currentSchedule });
         } catch (e) {

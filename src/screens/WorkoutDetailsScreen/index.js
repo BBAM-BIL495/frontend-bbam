@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as Notifications from "expo-notifications";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import CardItem from "../../components/CardItem";
@@ -11,7 +10,6 @@ import ReminderSection from "../../components/ReminderSection";
 import { createSession } from "../../services/trackingService";
 import api from "../../api";
 import {
-  scheduleLocalNotification,
   saveReminderState,
   loadReminderState,
 } from "../../utils/notifications";
@@ -119,7 +117,6 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
         }
         setReminderId(null);
       }
-      await Notifications.cancelAllScheduledNotificationsAsync();
     }
   };
 
@@ -128,11 +125,9 @@ const WorkoutDetailsScreen = ({ route, navigation }) => {
     if (!scheduleData) return;
 
     try {
-      await Notifications.cancelAllScheduledNotificationsAsync();
-      await scheduleLocalNotification(scheduleData, workoutPlan.name, planId);
       await saveReminderState(planId, true);
     } catch (e) {
-      console.log("[Reminder] local notification error:", e?.message);
+      console.log("[Reminder] notification error:", e?.message);
     }
 
     try {
