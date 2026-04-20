@@ -514,7 +514,7 @@ const ProfileSettingsScreen = ({ navigation }) => {
                       thumbColor="white"
                       style={{
                         transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }],
-                        marginTop: 2, // ✅ tiny iOS alignment fix
+                        marginTop: 2,
                       }}
                     />
                   }
@@ -522,21 +522,7 @@ const ProfileSettingsScreen = ({ navigation }) => {
               </Card>
 
               <SectionTitle>Account</SectionTitle>
-              <Card className="mb-10">
-                <RowItem
-                  icon="key-outline"
-                  title="Change Password"
-                  subtitle="Placeholder"
-                  right={
-                    <Ionicons
-                      name="chevron-forward"
-                      size={18}
-                      color="#9DA3A9"
-                    />
-                  }
-                  onPress={() => {}}
-                />
-                <View className="h-[1px] bg-bbam-back-card" />
+              <Card className="mb-24">
                 <RowItem
                   icon="document-text-outline"
                   title="Privacy Policy"

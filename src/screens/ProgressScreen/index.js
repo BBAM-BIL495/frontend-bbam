@@ -377,8 +377,8 @@ const SessionDetail = ({ session, onBack }) => {
           </View>
 
           {session?.summary_json?.ai_summary ? (
-            <View style={{ maxHeight: 200 }}>
-              <ScrollView showsVerticalScrollIndicator={false}>
+            <View style={{  }}>
+              <View>
                 <Text 
                   style={{ 
                     fontSize: 15, 
@@ -390,7 +390,7 @@ const SessionDetail = ({ session, onBack }) => {
                 >
                   {session?.summary_json?.ai_summary}
                 </Text>
-              </ScrollView>
+              </View>
             </View>
           ) : (
             <Text style={{ fontSize: 14, color: "rgba(255,255,255,0.65)", lineHeight: 20 }}>

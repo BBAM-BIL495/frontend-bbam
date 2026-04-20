@@ -335,7 +335,7 @@ const WorkoutEditScreen = ({ route, navigation }) => {
             ListEmptyComponent={
               <View className="flex-1 items-center justify-center py-8 bg-white/30 rounded-2xl border border-dashed border-bbam-text-light/30">
                 <Ionicons
-                  name="fitness-outline"
+                  name="barbell-outline"
                   size={48}
                   color="#9DA3A9"
                   className="mb-2"

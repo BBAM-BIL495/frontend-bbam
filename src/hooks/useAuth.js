@@ -36,6 +36,7 @@ export const useLogin = () => {
       await SecureStore.setItemAsync('userEmail', data.email);
       
       // invalidate to trigger useUser
+      queryClient.setQueryData(['user'], { id: data.user_id, ...data });
       queryClient.invalidateQueries({ queryKey: ['user'] });
       
       queryClient.prefetchQuery({

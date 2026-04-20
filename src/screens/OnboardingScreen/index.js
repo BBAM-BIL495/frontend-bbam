@@ -295,12 +295,6 @@ const OnboardingScreen = ({ navigation }) => {
                 onChangeText={setEmailInput}
               />
 
-              <TouchableOpacity className="items-end mt-2">
-                <Text className="font-bold text-bbam-indigo-main">
-                  Forgot password?
-                </Text>
-              </TouchableOpacity>
-
               <View className="mt-4">
                 <TextInput
                   label=""
@@ -330,7 +324,7 @@ const OnboardingScreen = ({ navigation }) => {
 
               <Divider />
 
-              <View className="flex-row justify-center mt-24">
+              <View className="flex-row justify-center mt-28">
                 <Text className="text-bbam-text-light">
                   Don’t have an account?{" "}
                 </Text>
