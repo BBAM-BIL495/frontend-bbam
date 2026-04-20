@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -85,11 +85,15 @@ const HomeScreen = ({ navigation }) => {
               Ready for a workout?
             </Text>
           </View>
-          <View className="w-14 h-14 rounded-3xl bg-bbam-back-card items-center justify-center mr-4">
+          <TouchableOpacity
+            className="w-14 h-14 rounded-3xl bg-bbam-back-card items-center justify-center mr-4"
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('Profile')}
+          >
             <Text className="text-m3-title-small font-bold text-bbam-indigo-main">
               {initials}
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* Stats Grid */}
