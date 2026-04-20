@@ -5,6 +5,7 @@ import * as Notifications from 'expo-notifications';
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, Switch, TouchableOpacity, ScrollView, Alert, AppState } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Button from '../../components/Button';
 import TextInput from '../../components/TextInput';
 import { useUser, useUpdateProfile } from '../../hooks/useAuth';
@@ -271,6 +272,7 @@ const ProfileSettingsScreen = ({ navigation }) => {
       await SecureStore.deleteItemAsync('userToken');
       await SecureStore.deleteItemAsync('userId');
       await SecureStore.deleteItemAsync('userEmail');
+      await AsyncStorage.setItem('disclaimer_seen', '0');
       // force to login screen
       queryClient.setQueryData(['user'], null);
       queryClient.clear();
